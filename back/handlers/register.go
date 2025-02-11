@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"net/http"
-	"real-time-forum/services"
+	"real-time-forum/utils"
 	"regexp"
 )
 
@@ -28,35 +28,35 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	if db == nil {
-		http.Error(w, "Erreur : base de données non disponible", http.StatusInternalServerError)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur : base de données non disponible")
 		return
 	}
 
 	var user RegisterInsert
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&user); err != nil {
-		http.Error(w, "Erreur lors du décodage du JSON", http.StatusBadRequest)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du décodage du JSON")
 		return
 	}
 	defer r.Body.Close()
 
 	u, err := uuid.NewV4()
 	if err != nil {
-		http.Error(w, "Erreur lors de la génération de l'UUID", http.StatusInternalServerError)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de la génération de l'UUID")
 		return
 	}
 	user.ID = u.String()
 
-	hashedPass, err := services.HashPassword(user.Password)
+	hashedPass, err := utils.HashPassword(user.Password)
 	if err != nil {
 		fmt.Printf("Erreur lors du hashage : %v\n", err)
-		http.Error(w, "Erreur lors du traitement interne", http.StatusInternalServerError)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du traitement interne")
 		return
 	}
 
 	// Vérifie que l'email et le username sont disponibles
 	if !checkData(db, user.Email, user.Username) {
-		http.Error(w, "L'email ou le nom d'utilisateur existe déjà", http.StatusConflict)
+		utils.SendErrorResponse(w, http.StatusConflict, "L'email ou le nom d'utilisateur existe déjà")
 		return
 	}
 
@@ -64,12 +64,15 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	query := "INSERT INTO USER (ID, EMAIL, PASSWORD, USERNAME, FIRSTNAME, LASTNAME, AGE, GENRE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 	_, err = db.Exec(query, user.ID, user.Email, hashedPass, user.Username, user.FirstName, user.LastName, user.Age, user.Genre)
 	if err != nil {
-		http.Error(w, "Erreur lors de l'insertion en base de données", http.StatusInternalServerError)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de l'insertion en base de données")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fmt.Sprintf("Utilisateur %s créé avec succès", user.Username)))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": fmt.Sprintf("Utilisateur %s créé avec succès", user.Username),
+	})
 }
 
 func checkData(db *sql.DB, email, username string) bool {
