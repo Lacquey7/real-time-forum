@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // if (window.location.pathname === '/register') {
+  //   showRegistrationForm();
+  // } else if (window.location.pathname === '/login') {
+  //   showLoginForm();
+  // }
+  showLoginForm();
+});
+
+function showLoginForm() {
   const loginForm = document.createElement('div');
   loginForm.classList.add('login-container');
   loginForm.innerHTML = `
@@ -53,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     showRegistrationForm();
   });
-});
+}
 
 function showRegistrationForm() {
   const registerForm = document.createElement('div');
@@ -73,6 +82,23 @@ function showRegistrationForm() {
           <div class="form-group">
               <input type="password" id="reg-confirm-password" placeholder="Confirm Password" required>
           </div>
+          <div class="form-group">
+              <input type="text" id="reg-firstname" placeholder="First Name" required>
+          </div>
+          <div class="form-group">
+              <input type="text" id="reg-lastname" placeholder="Last Name" required>
+          </div>
+          <div class="form-group">
+              <input type="number" id="reg-age" placeholder="Age" min="18" max="120" required>
+          </div>
+          <div class="form-group">
+              <select id="reg-genre" required>
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+              </select>
+          </div>
           <button type="submit">Register</button>
           <p>Already have an account? <a href="#" id="login-link">Login</a></p>
       </form>
@@ -82,25 +108,15 @@ function showRegistrationForm() {
 
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const username = document.getElementById('reg-username').value;
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
     const confirmPassword = document.getElementById('reg-confirm-password').value;
-
-    // if (!validateUsername(username)) {
-    //   alert('Username must be at least 3 characters long and contain only letters, numbers, and underscores');
-    //   return;
-    // }
-
-    if (!validateEmail(email)) {
-      alert('Please enter a valid email address');
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      alert('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
-      return;
-    }
+    const firstName = document.getElementById('reg-firstname').value;
+    const lastName = document.getElementById('reg-lastname').value;
+    const age = document.getElementById('reg-age').value;
+    const genre = document.getElementById('reg-genre').value;
 
     if (password !== confirmPassword) {
       alert("Passwords don't match!");
@@ -108,24 +124,31 @@ function showRegistrationForm() {
     }
 
     try {
-      const response = await fetch('/register', {
+      const response = await fetch('http://localhost:8080/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          username: username,
+          first_name: firstName,
+          last_name: lastName,
+          age: age,
+          genre: genre,
+        }),
       });
 
       const data = await response.json();
       if (response.ok) {
         alert('Registration successful! Please login.');
-        location.reload('/login');
+        location.reload();
       } else {
         alert(data.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
     }
   });
 

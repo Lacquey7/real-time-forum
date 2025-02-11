@@ -1,0 +1,2 @@
+/login ---> username + password
+/register ---> email + password + username + first_name + last_name + age + genre
