@@ -2,8 +2,9 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -12,5 +13,5 @@ func main() {
 		log.Fatalf("Erreur de connexion à la base de données : %v", err)
 	}
 	defer db.Close()
-
+	
 }
