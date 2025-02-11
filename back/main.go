@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"real-time-forum/routes"
 
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 )
 
 func main() {
@@ -17,8 +17,8 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
-	routes.SetupRoutes(mux)
+	routes.SetupRoutes(mux, db) // On passe `db`
 
-	http.ListenAndServe(":8080", nil)
-
+	log.Println("Serveur démarré sur le port 8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
