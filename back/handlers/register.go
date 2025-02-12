@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-
-	"io"
 	"net/http"
 	"real-time-forum/utils"
 
@@ -13,7 +11,7 @@ import (
 )
 
 type RegisterInsert struct {
-	ID        string
+	ID        string `json:"id"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	Username  string `json:"username"`
@@ -37,16 +35,18 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	var user RegisterInsert
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&user); err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du décodage du JSON")
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Erreur lors du décodage du JSON")
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	defer r.Body.Close()
 
-		}
-	}(r.Body)
+	// Vérification des champs obligatoires
+	if user.Email == "" || user.Password == "" || user.Username == "" {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Les champs email, mot de passe et nom d'utilisateur sont obligatoires")
+		return
+	}
 
+	// Génération de l'UUID
 	u, err := uuid.NewV4()
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de la génération de l'UUID")
@@ -54,20 +54,39 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 	user.ID = u.String()
 
-	hashedPass, err := utils.HashPassword(user.Password)
-	if err != nil {
-		fmt.Printf("Erreur lors du hashage : %v\n", err)
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du traitement interne")
-		return
-	}
+	// Canaux pour la goroutine
+	hashedPassChan := make(chan string, 1)
+	errChan := make(chan error, 1)
 
-	// Vérifie que l'email et username sont disponibles
+	go func() {
+		defer close(hashedPassChan)
+		defer close(errChan)
+
+		hashedPass, err := utils.HashPassword(user.Password)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		hashedPassChan <- hashedPass
+	}()
+
+	// Vérifie que l'email et le nom d'utilisateur sont disponibles
 	if !checkDataRegister(db, user.Email, user.Username) {
 		utils.SendErrorResponse(w, http.StatusConflict, "L'email ou le nom d'utilisateur existe déjà")
 		return
 	}
 
-	// Insertion des données de l'utilisateur dans la base
+	// Récupération du mot de passe hashé ou de l'erreur
+	var hashedPass string
+	select {
+	case hashedPass = <-hashedPassChan:
+	case err = <-errChan:
+		fmt.Printf("Erreur lors du hashage : %v\n", err)
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du traitement interne")
+		return
+	}
+
+	// Insertion des données dans la base de données
 	query := "INSERT INTO USER (ID, EMAIL, PASSWORD, USERNAME, FIRSTNAME, LASTNAME, AGE, GENRE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 	_, err = db.Exec(query, user.ID, user.Email, hashedPass, user.Username, user.FirstName, user.LastName, user.Age, user.Genre)
 	if err != nil {
@@ -75,6 +94,11 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	// Réponse JSON de succès
+	response := map[string]string{"message": "Inscription réussie"}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
 func checkDataRegister(db *sql.DB, email, username string) bool {
@@ -90,6 +114,5 @@ func checkDataRegister(db *sql.DB, email, username string) bool {
 		fmt.Printf("Erreur lors de la vérification des données : %v\n", err)
 		return false
 	}
-	// Retourne vrai si l'email et le username ne sont PAS déjà utilisés
 	return !exists
 }

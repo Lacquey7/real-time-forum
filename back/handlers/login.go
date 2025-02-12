@@ -18,7 +18,6 @@ type LoginCheck struct {
 
 // Login prend `db` en paramètre
 func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return

@@ -1,2 +1,10 @@
-POST /login ---> username + password || RETURN ->
-POST /register ---> email + password + username + first_name + last_name + age + genre || RETURN ->
+POST /login ---> email + password
+   || RETURN CODE 200 OK -> {{ "sessionID" : "SESSION_ID", "message" : "Utilisateur connecté" }, {data : [{POST}
+   SINON
+   || RETURN CODE 401 Unauthorized  -> { "code": "int", "message" : "message error"}
+
+POST /register ---> email + password + username + first_name + last_name + age + genre
+    || RETURN CODE 201 Created -> {{ "sessionID" : "SESSION_ID", "message" : "Utilisateur crée" }, {data : [{POST}}
+    SINON
+    || RETURN CODE 409 Conflict -> { "code": "int", "message" : "message error"}
+
