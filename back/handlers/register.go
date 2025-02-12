@@ -54,7 +54,7 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	// Vérifie que l'email et le username sont disponibles
+	// Vérifie que l'email et username sont disponibles
 	if !checkData(db, user.Email, user.Username) {
 		utils.SendErrorResponse(w, http.StatusConflict, "L'email ou le nom d'utilisateur existe déjà")
 		return
@@ -68,8 +68,8 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": fmt.Sprintf("Utilisateur %s créé avec succès", user.Username),
 	})
