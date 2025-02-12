@@ -3,8 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Real-Time-Forum</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<!-- Container principal -->
+<div id="app">
+    <!-- Les composants seront injectés ici -->
+</div>
 
+<!-- Utils -->
+<script src="src/utils/router.js"></script>
+<script src="src/utils/api.js"></script>
+
+<!-- Components -->
+<script src="src/components/auth.js"></script>
+<script src="src/components/posts.js"></script>
+<script src="src/components/messages.js"></script>
+<script src="src/components/notifications.js"></script>
+
+<!-- Tests -->
+<script>
+    // Initialisation au chargement de la page
+    document.getElementById('app').innerHTML = Auth.render();
+    Auth.init();
+</script>
+
+<!-- Point d'entrée -->
+<script src="src/singlePageRouting.js"></script>
 </body>
 </html>
