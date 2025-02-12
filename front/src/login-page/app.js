@@ -43,11 +43,11 @@ function showLoginForm() {
           password: password,
         }),
       });
+
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem('userData', JSON.stringify({ message: data.message }));
-        const homeUrl = new URL('/home', window.location.origin);
-        window.location.href = homeUrl;
+        localStorage.setItem('userData', JSON.stringify({ email: email, message: data.message }));
+        window.location.href = '/';
       } else {
         alert(data.message || 'Login failed');
       }
@@ -151,14 +151,17 @@ function showRegistrationForm() {
       });
 
       const data = await response.json();
+
       if (response.ok) {
-        alert('Registration successful! Please login.');
-        location.reload();
+        alert('Registration successful!');
+        window.location.href = '/';
       } else {
+        console.error('Registration failed:', data);
         alert(data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('register error:', error);
+      alert('Login failed. Please try again.');
     }
   });
 
@@ -176,4 +179,34 @@ function validateEmail(email) {
 function validatePassword(password) {
   const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
   return regex.test(password);
+}
+
+function setCookie(name, value, days) {
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + days);
+  document.cookie = `${name}=${value}; expires=${expirationDate.toUTCString()}; path=/`;
+}
+
+function getCookie(name) {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.split('=').map((c) => c.trim());
+    if (cookieName === name) {
+      return cookieValue;
+    }
+  }
+  return null;
+}
+
+function deleteCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+}
+
+function logout() {
+  deleteCookie('userEmail');
+  deleteCookie('isLoggedIn');
+
+  localStorage.removeItem('userData');
+
+  window.location.href = '/login';
 }
