@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"net/http"
+	"real-time-forum/services"
 	"real-time-forum/utils"
 )
 
@@ -69,13 +70,11 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		hashedPassChan <- hashedPass
 	}()
 
-	// Vérifie que l'email et le nom d'utilisateur sont disponibles
 	if !checkDataRegister(db, user.Email, user.Username) {
 		utils.SendErrorResponse(w, http.StatusConflict, "L'email ou le nom d'utilisateur existe déjà")
 		return
 	}
 
-	// Récupération du mot de passe hashé ou de l'erreur
 	var hashedPass string
 	select {
 	case hashedPass = <-hashedPassChan:
@@ -85,16 +84,24 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	// Insertion des données dans la base de données
-	query := "INSERT INTO USER (ID, EMAIL, PASSWORD, USERNAME, FIRSTNAME, LASTNAME, AGE, GENRE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-	_, err = db.Exec(query, user.ID, user.Email, hashedPass, user.Username, user.FirstName, user.LastName, user.Age, user.Genre)
+	err = services.InsertUser(db, user.ID, user.Email, hashedPass, user.Username, user.FirstName, user.LastName, user.Age, user.Genre)
 	if err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de l'insertion en base de données")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sessionToken, err := services.CreateSessionToken(db, user.ID)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Réponse JSON de succès
-	response := map[string]string{"message": "Inscription réussie"}
+	response := map[string]string{
+		"message":     "Inscription réussie",
+		"accessToken": sessionToken,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)

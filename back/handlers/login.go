@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
+	"real-time-forum/services"
 	"real-time-forum/utils"
 )
 
@@ -34,53 +34,56 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du décodage du JSON")
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	defer r.Body.Close()
 
-		}
-	}(r.Body)
-
-	if !checkDataLogin(db, user.Email, user.Password) {
-		utils.SendErrorResponse(w, http.StatusUnauthorized, "L'email ou le mot de passe incorrect")
+	success, userID := checkDataLogin(db, user.Email, user.Password)
+	if !success {
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "L'email ou le mot de passe est incorrect")
 		return
+	}
+
+	// Création du token de session
+	sessionToken, err := services.CreateSessionToken(db, userID)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de la création du token de session")
+		return
+	}
+
+	response := map[string]string{
+		"message":     "Connection réussie",
+		"accessToken": sessionToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(map[string]string{
-		"message": fmt.Sprintf("Utilisateur connecté"),
-	})
-	if err != nil {
-		return
-	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
-func checkDataLogin(db *sql.DB, email, password string) bool {
+func checkDataLogin(db *sql.DB, email, password string) (bool, string) {
 	// Vérification de l'email valide
 	if !utils.IsvalidEmail(email) {
 		fmt.Println("Email invalide")
-		return false
+		return false, ""
 	}
 
-	var hashedPassword string
-	query := `SELECT password FROM user WHERE email = ?`
-	err := db.QueryRow(query, email).Scan(&hashedPassword)
+	var userID, hashedPassword string
+	query := `SELECT id, password FROM user WHERE email = ?`
+	err := db.QueryRow(query, email).Scan(&userID, &hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			fmt.Println("Aucun utilisateur trouvé avec cet email")
+			log.Println("Aucun utilisateur trouvé avec cet email :", email)
 		} else {
-			log.Println("Erreur lors de la récupération du mot de passe :", err)
+			log.Println("Erreur lors de la récupération des informations de l'utilisateur :", err)
 		}
-		return false
+		return false, ""
 	}
 
 	// Vérification du mot de passe
-	err = utils.CheckPassword(password, hashedPassword)
-	if err != nil {
+	if err := utils.CheckPassword(password, hashedPassword); err != nil {
 		fmt.Println("Mot de passe incorrect")
-		return false
+		return false, ""
 	}
 
-	return true
+	// Retourne true et l'ID de l'utilisateur si tout est correct
+	return true, userID
 }
