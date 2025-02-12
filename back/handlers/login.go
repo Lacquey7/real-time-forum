@@ -41,11 +41,10 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": fmt.Sprintf("Utilisateur connecté"),
 	})
-
 }
 
 func checkDataLogin(db *sql.DB, email, password string) bool {
