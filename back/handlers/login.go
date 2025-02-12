@@ -3,7 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"real-time-forum/utils"
@@ -33,7 +35,12 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du décodage du JSON")
 		return
 	}
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(r.Body)
 
 	if !checkDataLogin(db, user.Email, user.Password) {
 		utils.SendErrorResponse(w, http.StatusUnauthorized, "L'email ou le mot de passe incorrect")
@@ -42,14 +49,17 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	err := json.NewEncoder(w).Encode(map[string]string{
 		"message": fmt.Sprintf("Utilisateur connecté"),
 	})
+	if err != nil {
+		return
+	}
 }
 
 func checkDataLogin(db *sql.DB, email, password string) bool {
 	// Vérification de l'email valide
-	if !utils.IsValidEmail(email) {
+	if !utils.IsvalidEmail(email) {
 		fmt.Println("Email invalide")
 		return false
 	}
@@ -58,7 +68,7 @@ func checkDataLogin(db *sql.DB, email, password string) bool {
 	query := `SELECT password FROM user WHERE email = ?`
 	err := db.QueryRow(query, email).Scan(&hashedPassword)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			fmt.Println("Aucun utilisateur trouvé avec cet email")
 		} else {
 			log.Println("Erreur lors de la récupération du mot de passe :", err)

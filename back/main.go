@@ -33,7 +33,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Erreur de connexion à la base de données : %v", err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 
 	mux := http.NewServeMux()
 	routes.SetupRoutes(mux, db) // On passe `db`

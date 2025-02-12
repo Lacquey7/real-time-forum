@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gofrs/uuid"
+	"io"
 	"net/http"
 	"real-time-forum/utils"
 )
@@ -37,7 +38,12 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors du décodage du JSON")
 		return
 	}
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(r.Body)
 
 	u, err := uuid.NewV4()
 	if err != nil {
@@ -70,7 +76,7 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 func checkDataRegister(db *sql.DB, email, username string) bool {
-	if !utils.IsValidEmail(email) {
+	if !utils.IsvalidEmail(email) {
 		fmt.Println("Email invalide")
 		return false
 	}
@@ -82,7 +88,6 @@ func checkDataRegister(db *sql.DB, email, username string) bool {
 		fmt.Printf("Erreur lors de la vérification des données : %v\n", err)
 		return false
 	}
-
 	// Retourne vrai si l'email et le username ne sont PAS déjà utilisés
 	return !exists
 }
