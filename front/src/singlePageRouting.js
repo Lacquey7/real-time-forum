@@ -13,100 +13,81 @@ const Router = {
     },
 
     init() {
-        try {
-            window.addEventListener('load', () => this.handleRoute());
-            window.addEventListener('hashchange', () => this.handleRoute());
-            this.handleRoute();
-        } catch (error) {
-            console.error('Router initialization failed:', error);
-            this.handleError(error);
+        window.addEventListener('load', () => this.handleRoute());
+        window.addEventListener('hashchange', () => this.handleRoute());
+
+        // Redirection vers auth par défaut si pas de hash
+        if (!window.location.hash) {
+            window.location.hash = 'auth';
         }
+
+        this.handleRoute();
     },
 
     handleRoute() {
-        try {
-            const isAuth = this.isAuthenticated();
-            const currentHash = window.location.hash.slice(1) || 'auth';
+        const isAuth = this.isAuthenticated();
+        const currentHash = window.location.hash.slice(1);
 
-            // Vérifie si la page existe
-            if (!this.pages[currentHash]) {
-                throw new Error(`Page "${currentHash}" not found`);
+        // Si pas de hash ou hash invalide, rediriger vers auth
+        if (!currentHash || !this.pages[currentHash]) {
+            if (currentHash && !this.pages[currentHash]) {
+                this.handleError(new Error(`Invalid page: ${currentHash}`));
             }
-
-            // Vérifie l'authentification
-            if (this.pages[currentHash].auth && !isAuth) {
-                this.navigateTo('auth');
-                return;
-            }
-
-            this.showPage(currentHash);
-        } catch (error) {
-            console.error('Routing error:', error);
-            this.handleError(error);
+            window.location.hash = 'auth';
+            return;
         }
+
+        // Vérification de l'authentification pour les routes protégées
+        if (this.pages[currentHash].auth && !isAuth) {
+            window.location.hash = 'auth';
+            return;
+        }
+
+        this.showPage(currentHash);
     },
 
     showPage(pageId) {
-        try {
-            // Vérifie si le conteneur principal existe
-            const app = document.getElementById('app');
-            if (!app) {
-                throw new Error('App container not found');
-            }
+        // Cache toutes les pages
+        document.querySelectorAll('.page').forEach(page => {
+            page.style.display = 'none';
+        });
 
-            // Cache toutes les pages
-            const pages = document.querySelectorAll('.page');
-            if (pages.length === 0) {
-                throw new Error('No pages found with class "page"');
-            }
-
-            pages.forEach(page => {
-                page.style.display = 'none';
-            });
-
-            // Affiche la page demandée
-            const page = document.getElementById(this.pages[pageId].id);
-            if (!page) {
-                throw new Error(`Page container "${this.pages[pageId].id}" not found`);
-            }
-
-            page.style.display = 'block';
-        } catch (error) {
-            console.error('Display error:', error);
-            this.handleError(error);
+        // Affiche la page demandée
+        const page = document.getElementById(this.pages[pageId].id);
+        if (!page) {
+            this.handleError(new Error(`Page container "${this.pages[pageId].id}" not found`));
+            return;
         }
+
+        page.style.display = 'block';
     },
 
     navigateTo(pageId) {
-        try {
-            if (!this.pages[pageId]) {
-                throw new Error(`Invalid page: ${pageId}`);
-            }
-
-            window.location.hash = pageId;
-            this.handleRoute();
-        } catch (error) {
-            console.error('Navigation error:', error);
-            this.handleError(error);
+        if (!this.pages[pageId]) {
+            this.handleError(new Error(`Invalid page: ${pageId}`));
+            return;
         }
+
+        // Vérifie l'authentification pour les routes protégées
+        if (this.pages[pageId].auth && !this.isAuthenticated()) {
+            window.location.hash = 'auth';
+            return;
+        }
+
+        window.location.hash = pageId;
     },
 
     handleError(error) {
-        // Affiche une erreur à l'utilisateur
+        console.error('Router error:', error);
+
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
             errorContainer.textContent = 'An error occurred: ' + error.message;
             errorContainer.style.display = 'block';
 
-            // Cache l'erreur après 5 secondes
             setTimeout(() => {
                 errorContainer.style.display = 'none';
             }, 5000);
-        }
-
-        // En cas d'erreur critique, retourne à la page d'auth
-        if (!document.querySelector('.page[style*="block"]')) {
-            this.navigateTo('auth');
         }
     },
 
@@ -116,15 +97,8 @@ const Router = {
 
     logout() {
         localStorage.removeItem('accessToken');
-        this.navigateTo('auth');
+        window.location.hash = 'auth';
     }
-
-
 };
-// Navigation
-Router.navigateTo('main');
-
-// Gestion de la déconnexion
-logoutButton.addEventListener('click', () => Router.logout());
 
 export default Router;
