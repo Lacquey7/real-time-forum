@@ -134,8 +134,6 @@ const Auth = {
             return;
         }
 
-        Auth.showLoading('login-form');
-
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const rememberMe = document.getElementById('remember-me').checked;
@@ -165,7 +163,7 @@ const Auth = {
                 errorElement.textContent = error.message;
             })
             .finally(() => {
-                Auth.hideLoading('login-form');
+
             });
     },
 
@@ -173,37 +171,36 @@ const Auth = {
         e.preventDefault();
         const errorElement = document.getElementById('register-error');
 
-        // Valider le formulaire
-        const errors = Auth.validateRegisterForm();
-        if (errors.length > 0) {
-            errorElement.textContent = errors.join('. ');
-            return;
-        }
-
-        Auth.showLoading('register-form');
-
         const formData = {
-            nickname: document.getElementById('register-nickname').value.trim(),
-            age: parseInt(document.getElementById('register-age').value),
-            gender: document.getElementById('register-gender').value,
-            firstName: document.getElementById('register-firstname').value.trim(),
-            lastName: document.getElementById('register-lastname').value.trim(),
             email: document.getElementById('register-email').value.trim(),
-            password: document.getElementById('register-password').value
+            password: document.getElementById('register-password').value,
+            username: document.getElementById('register-nickname').value.trim(),
+            first_name: document.getElementById('register-firstname').value.trim(),
+            last_name: document.getElementById('register-lastname').value.trim(),
+            age: document.getElementById('register-age').value.toString(),
+            genre: document.getElementById('register-gender').value,
         };
+        //console.log('Registering with:', formData);
 
-        fetch('/api/register', {
+        fetch('http://localhost:8080/register', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(formData)
         })
-            .then(response => {
+            .then(async response => {
+                const data = await response.json().catch(e => {
+                    console.error('Erreur parsing JSON:', e);
+                    return {};
+                });
+                //console.log('Réponse du serveur:', data);
+
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(data.error || 'Registration failed');
                 }
-                return response.json();
+                return data;
             })
             .then(data => {
                 // Succès de l'enregistrement
@@ -213,10 +210,10 @@ const Auth = {
                 loginError.textContent = 'Registration successful! You can now log in.';
             })
             .catch(error => {
+                console.error('Erreur detaillée:', error);
                 errorElement.textContent = error.message;
             })
             .finally(() => {
-                Auth.hideLoading('register-form');
             });
     },
 
@@ -237,21 +234,6 @@ const Auth = {
 
         return errors;
     },
-
-    validateRegisterForm() {
-        const nickname = document.getElementById('register-nickname').value.trim();
-        const age = document.getElementById('register-age').value;
-        const gender = document.getElementById('register-gender').value;
-        const firstName = document.getElementById('register-firstname').value.trim();
-        const lastName = document.getElementById('register-lastname').value.trim();
-        const email = document.getElementById('register-email').value.trim();
-        const password = document.getElementById('register-password').value;
-        const errors = [];
-
-        return errors;
-    },
-
-
 
     logout: () => {
         localStorage.removeItem('accessToken');

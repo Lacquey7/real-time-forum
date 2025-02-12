@@ -8,17 +8,17 @@ const routes = {
 
 function showAuth() {
     showPage('auth-container');
-    showAuthSection('auth-page');
+    showAuthSection('auth-buttons');
 }
 
 function showLogin() {
     showPage('auth-container');
-    showAuthSection('login-page');
+    showAuthSection('login-section');
 }
 
 function showRegister() {
     showPage('auth-container');
-    showAuthSection('register-page');
+    showAuthSection('register-section');
 }
 
 function showMainPage() {
@@ -27,17 +27,6 @@ function showMainPage() {
     });
     document.getElementById('main-page').classList.add('active');
 }
-
-// Modifier les gestionnaires de formulaires
-document.getElementById('login-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    showMainPage();
-});
-
-document.getElementById('register-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    showMainPage();
-});
 
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
@@ -53,31 +42,53 @@ function showAuthSection(sectionId) {
     document.getElementById(sectionId).style.display = 'block';
 }
 
-// Gestionnaire d'événements
-document.addEventListener('DOMContentLoaded', () => {
-    // Router initial
-    router();
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = {
+        nickname: document.getElementById('register-nickname').value.trim(),
+        age: document.getElementById('register-age').value.toString(),
+        gender: document.getElementById('register-gender').value,
+        firstName: document.getElementById('register-firstname').value.trim(),
+        lastName: document.getElementById('register-lastname').value.trim(),
+        email: document.getElementById('register-email').value.trim(),
+        password: document.getElementById('register-password').value
+    };
 
-    // Gestion du formulaire de login
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        // Après login réussi
-        window.location.hash = '/main';
-    });
+    try {
+       await fetch('http://localhost:8080/register', {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json'
+           },
+           body: JSON.stringify(formData)
+       });
 
-    // Gestion du logout
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        window.location.hash = '/';
-    });
+        if (!response.ok) {
+            throw new Error('Registration failed');
+        }
+
+        const data = await response.json();
+        // Redirection vers la page de login après inscription réussie
+        window.location.hash = '/login';
+        // Afficher un message de succès
+        const loginError = document.getElementById('login-error');
+        if (loginError) {
+            loginError.style.color = '#4CAF50';
+            loginError.textContent = 'Registration successful! You can now log in.';
+        }
+    } catch (error) {
+        const registerError = document.getElementById('register-error');
+        if (registerError) {
+            registerError.textContent = error.message;
+        }
+    }
 });
 
-function refreshMainPage() {
-    // Rafraîchit la page principale
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById('main-page').classList.add('active');
-}
+
+
+// Event listeners pour le routing
+window.addEventListener('hashchange', router);
+window.addEventListener('load', router);
 
 function router() {
     const path = window.location.hash.slice(1) || '/';
@@ -87,6 +98,3 @@ function router() {
         routes['/']();
     }
 }
-
-window.addEventListener('hashchange', router);
-window.addEventListener('load', router);
