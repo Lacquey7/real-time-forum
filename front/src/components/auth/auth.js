@@ -103,9 +103,10 @@ const Auth = {
     showSection: (sectionId) => {
         console.log('Trying to show section:', sectionId);
         const sections = document.querySelectorAll('.auth-section');
-        console.log('Found sections:', sections.length);
+        //console.log('Found sections:', sections.length);
 
         sections.forEach(section => {
+            section.style.display = 'none';
             section.classList.remove('active');
             console.log('Removed active from:', section.id);
         });
@@ -118,8 +119,15 @@ const Auth = {
         const targetSection = document.getElementById(targetId);
         console.log('Target section:', targetSection);
         if (targetSection) {
+            targetSection.style.display = 'block';
             targetSection.classList.add('active');
             console.log('Added active to:', targetId);
+        }
+
+        // Gestion spéciale pour les boutons d'authentification
+        const authButtons = document.getElementById('auth-buttons');
+        if (authButtons) {
+            authButtons.style.display = targetId === 'auth-buttons' ? 'block' : 'none';
         }
     },
 
@@ -138,7 +146,7 @@ const Auth = {
         const password = document.getElementById('login-password').value;
         const rememberMe = document.getElementById('remember-me').checked;
 
-        fetch('/api/login', {
+        fetch('http://localhost:8080/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
