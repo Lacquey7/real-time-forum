@@ -7,7 +7,6 @@ import (
 	"github.com/gofrs/uuid"
 	"net/http"
 	"real-time-forum/utils"
-	"regexp"
 )
 
 type RegisterInsert struct {
@@ -55,7 +54,7 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	// Vérifie que l'email et username sont disponibles
-	if !checkData(db, user.Email, user.Username) {
+	if !checkDataRegister(db, user.Email, user.Username) {
 		utils.SendErrorResponse(w, http.StatusConflict, "L'email ou le nom d'utilisateur existe déjà")
 		return
 	}
@@ -68,15 +67,10 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": fmt.Sprintf("Utilisateur %s créé avec succès", user.Username),
-	})
 }
 
-func checkData(db *sql.DB, email, username string) bool {
-	if !isValidEmail(email) {
+func checkDataRegister(db *sql.DB, email, username string) bool {
+	if !utils.IsValidEmail(email) {
 		fmt.Println("Email invalide")
 		return false
 	}
@@ -91,10 +85,4 @@ func checkData(db *sql.DB, email, username string) bool {
 
 	// Retourne vrai si l'email et le username ne sont PAS déjà utilisés
 	return !exists
-}
-
-func isValidEmail(email string) bool {
-	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	re := regexp.MustCompile(regex)
-	return re.MatchString(email)
 }
