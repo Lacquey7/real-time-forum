@@ -8,8 +8,8 @@ function showLoginForm() {
   loginForm.innerHTML = `
       <form id="login-form">
           <h2>Login</h2>
-          <div class="form-group">
-              <input type="text" id="username" placeholder="Username" required>
+         <div class="form-group">
+              <input type="email" id="reg-email" placeholder="Email" required>
           </div>
           <div class="form-group">
               <input type="password" id="password" placeholder="Password" required>
@@ -24,8 +24,13 @@ function showLoginForm() {
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const username = document.getElementById('username').value;
+    const email = document.getElementById('reg-email').value;
     const password = document.getElementById('password').value;
+
+    if (!validateEmail(email)) {
+      alert('Invalid email!');
+      return;
+    }
 
     try {
       const response = await fetch('http://localhost:8080/login', {
@@ -34,14 +39,15 @@ function showLoginForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: username,
+          email: email,
           password: password,
         }),
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem('user', JSON.stringify(data));
-        window.location.href = '/home';
+        localStorage.setItem('userData', JSON.stringify({ message: data.message }));
+        const homeUrl = new URL('/home', window.location.origin);
+        window.location.href = homeUrl;
       } else {
         alert(data.message || 'Login failed');
       }
@@ -116,6 +122,17 @@ function showRegistrationForm() {
       return;
     }
 
+    if (!validateEmail(email)) {
+      alert('Invalid email!');
+      return;
+    }
+
+    //Pour les test on enlever la validation du mot de passe
+    // if (!validatePassword(password)) {
+    //   alert('Password must contain at least 8 characters, one uppercase letter, one lowercase letter and one number');
+    //   return;
+    // }
+
     try {
       const response = await fetch('http://localhost:8080/register', {
         method: 'POST',
@@ -159,8 +176,4 @@ function validateEmail(email) {
 function validatePassword(password) {
   const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
   return regex.test(password);
-}
-
-function validateUsername(username) {
-  // verifier dans la base de donner si il existe pas deja le nom
 }
