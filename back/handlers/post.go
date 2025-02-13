@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"real-time-forum/models"
@@ -10,46 +11,18 @@ import (
 	"real-time-forum/utils"
 )
 
-type ResponsePost struct {
-	Id        int               `json:"id"`
-	User      string            `json:"username"`
-	Content   string            `json:"content"`
-	Likes     int               `json:"likes"`
-	Dislikes  int               `json:"dislikes"`
-	Comments  []ResponseComment `json:"comments"`
-	Category  string            `json:"category"`
-	Image     string            `json:"image"`
-	CreatedAt string            `json:"created_at"`
-}
-
-type ResponseComment struct {
-	Id        int    `json:"id"`
-	User      string `json:"username"`
-	Content   string `json:"content"`
-	Likes     int    `json:"likes"`
-	Dislikes  int    `json:"dislikes"`
-	CreatedAt string `json:"created_at"`
-}
-
 func Post(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	switch r.Method {
 	case http.MethodPost:
 		handleCreatePost(w, r, db)
 	case http.MethodGet:
-		//handleGetPosts(w, db)
+		handleGetPosts(w, r, db)
 	default:
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 	}
 }
 
 func handleCreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	var post models.Post
-	err := json.NewDecoder(r.Body).Decode(&post)
-	if err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Format JSON invalide pour la création de post")
-		return
-	}
-
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusUnauthorized, "Missing cookie")
@@ -58,7 +31,14 @@ func handleCreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	checkSession, userID := utils.CheckSession(db, cookie.Value)
 	if !checkSession {
-		utils.SendErrorResponse(w, http.StatusUnauthorized, "Session invalide")
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "Session invalid")
+		return
+	}
+
+	var post models.Post
+	err = json.NewDecoder(r.Body).Decode(&post)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Format JSON invalide pour la création de post")
 		return
 	}
 
@@ -77,4 +57,30 @@ func handleCreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
+}
+
+func handleGetPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "Missing cookie")
+		return
+	}
+
+	checkSession, _ := utils.CheckSession(db, cookie.Value)
+	if !checkSession {
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "Session invalid")
+		return
+	}
+
+	posts, err := utils.GetPostsWithComments(db)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de la récupération des posts")
+		return
+	}
+
+	fmt.Println("Posts récupérés :", posts) // ✅ Vérification
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(posts)
+
 }
