@@ -57,8 +57,14 @@ func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("📩 Message reçu : %s\n", msg.Content)
 
+		switch msg.Type {
+		case "message_private":
+		}
+
 		msg.Sender = conn
 
-		h.broadcast <- msg
+		if msg.Type != "message_private" {
+			h.broadcast <- msg
+		}
 	}
 }
