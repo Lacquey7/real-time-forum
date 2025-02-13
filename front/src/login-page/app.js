@@ -46,7 +46,14 @@ function showLoginForm() {
 
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem('userData', JSON.stringify({ email: email, message: data.message }));
+        localStorage.setItem(
+          'userData',
+          JSON.stringify({
+            message: data.message,
+            accessToken: data.accessToken,
+          })
+        );
+
         window.location.href = '/';
       } else {
         alert(data.message || 'Login failed');
@@ -58,8 +65,8 @@ function showLoginForm() {
   });
 
   document.getElementById('register-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    showRegistrationForm();
+    //e.preventDefault();
+    //showRegistrationForm();
   });
 }
 
@@ -200,13 +207,4 @@ function getCookie(name) {
 
 function deleteCookie(name) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-}
-
-function logout() {
-  deleteCookie('userEmail');
-  deleteCookie('isLoggedIn');
-
-  localStorage.removeItem('userData');
-
-  window.location.href = '/login';
 }
