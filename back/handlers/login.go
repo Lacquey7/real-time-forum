@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"real-time-forum/services"
 	"real-time-forum/utils"
+	"time"
 )
 
 type LoginCheck struct {
@@ -49,13 +50,24 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	// Définir un cookie HTTP-Only pour stocker la session
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionToken,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,  // Empêche l'accès via JavaScript (protection XSS)
+		Secure:   false, // Mettre true en production (HTTPS obligatoire)
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+
+	// Réponse JSON au client
 	response := map[string]string{
-		"message":     "Connection réussie",
-		"accessToken": sessionToken,
+		"message": "Connexion réussie",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 

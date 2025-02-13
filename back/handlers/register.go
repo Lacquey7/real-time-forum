@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"real-time-forum/services"
 	"real-time-forum/utils"
+	"time"
 
 	"github.com/gofrs/uuid"
 )
@@ -97,10 +98,20 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	// Définir un cookie HTTP-Only pour stocker la session
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionToken,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,  // Empêche l'accès via JavaScript (protection XSS)
+		Secure:   false, // Mettre true en production (HTTPS obligatoire)
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+
 	// Réponse JSON de succès
 	response := map[string]string{
-		"message":     "Inscription réussie",
-		"accessToken": sessionToken,
+		"message": "Inscription réussie",
 	}
 
 	w.Header().Set("Content-Type", "application/json")

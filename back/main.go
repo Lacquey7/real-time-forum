@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"real-time-forum/routes"
-
-	_ "github.com/mattn/go-sqlite3"
+	"real-time-forum/websocket"
 )
 
 // Middleware CORS
@@ -40,8 +40,12 @@ func main() {
 		}
 	}(db)
 
+	hub := websocket.NewHub(db)
+	go hub.Run()
+
 	mux := http.NewServeMux()
-	routes.SetupRoutes(mux, db) // On passe `db`
+
+	routes.SetupRoutes(mux, db, hub) // On passe `db`
 
 	// Ajout du middleware CORS
 	handlerWithCORS := corsMiddleware(mux)
