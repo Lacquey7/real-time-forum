@@ -29,6 +29,11 @@ func NewUpgrader(db *sql.DB) websocket.Upgrader {
 	}
 }
 
+type Message struct {
+	Type    string `json:"type"`
+	Content string `json:"content"`
+}
+
 func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
 	upgrader := NewUpgrader(h.DB) // Crée un Upgrader avec accès à la DB
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -42,13 +47,19 @@ func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		h.unregister <- conn
 	}()
+
+	log.Println("✅ Nouveau client WebSocket connecté")
+
 	// Lecture des messages envoyés par le client
 	for {
-		var msg map[string]interface{}
+		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Println("Erreur WebSocket lecture:", err)
 			break
 		}
+		log.Printf("📩 Message reçu : %s\n", msg.Content)
+
+		h.broadcast <- msg
 	}
 }
