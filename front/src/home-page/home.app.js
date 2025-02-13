@@ -1,9 +1,11 @@
 // home.app.js
 import Router from "../singlePageRouting.js";
+import wsService from "../webSocketService.js";
 
 class HomePage {
     constructor() {
         this.init();
+        this.initWebSocket();
     }
 
     init() {
@@ -28,35 +30,7 @@ class HomePage {
         <!-- Contenu principal -->
         <main class="home-content">
             <div id="posts-container">
-                <!-- Post 1 -->
-                <div class="post">
-                    <h2>Post Title</h2>
-                    <p>Post Content</p>
-                    <div class="post-actions">
-                        <button>Modifier</button>
-                        <button>Supprimer</button>
-                    </div>
-                </div>
-                
-                <!-- Post 2 -->
-                <div class="post">
-                    <h2>Post Title</h2>
-                    <p>Post Content</p>
-                    <div class="post-actions">
-                        <button>Modifier</button>
-                        <button>Supprimer</button>
-                    </div>
-                </div>
-                
-                <!-- Post 3 -->
-                <div class="post">
-                    <h2>Post Title</h2>
-                    <p>Post Content</p>
-                    <div class="post-actions">
-                        <button>Modifier</button>
-                        <button>Supprimer</button>
-                    </div>
-                </div>
+                <!-- Les posts seront ajoutés ici -->
             </div>
         </main>
 
@@ -72,10 +46,31 @@ class HomePage {
 
         <!-- Bouton nouveau post -->
         <button id="new-post-btn">❤️</button>
+
+        <!-- Modale pour nouveau post -->
+        <div id="post-modal" style="display: none;" class="post-modal">
+            <div class="post-modal-content">
+                <h2>Nouveau Post</h2>
+                <textarea id="new-post" placeholder="Écrivez votre message..."></textarea>
+                <div class="post-modal-actions">
+                    <button id="submit-post">Publier</button>
+                    <button id="cancel-post">Annuler</button>
+                </div>
+            </div>
+        </div>
     </div>
 `;
 
         this.addEventListeners();
+    }
+
+    initWebSocket() {
+        wsService.connect();
+
+        wsService.on('newPost', (message) => {
+            console.log('Nouveau post reçu:', message);
+            this.addPostToDOM(message.content);
+        });
     }
 
     addEventListeners() {
@@ -87,10 +82,30 @@ class HomePage {
             });
         }
 
+        // Gestionnaire pour ouvrir la modale
+        const newPostBtn = document.getElementById('new-post-btn');
+        if (newPostBtn) {
+            newPostBtn.addEventListener('click', () => {
+                const modal = document.getElementById('post-modal');
+                modal.style.display = 'flex';
+            });
+        }
+
+        // Gestionnaire pour soumettre le post
         const submitPostBtn = document.getElementById('submit-post');
         if (submitPostBtn) {
             submitPostBtn.addEventListener('click', () => {
                 this.createPost();
+            });
+        }
+
+        // Gestionnaire pour fermer la modale
+        const cancelPostBtn = document.getElementById('cancel-post');
+        if (cancelPostBtn) {
+            cancelPostBtn.addEventListener('click', () => {
+                const modal = document.getElementById('post-modal');
+                modal.style.display = 'none';
+                document.getElementById('new-post').value = '';
             });
         }
     }
@@ -99,12 +114,44 @@ class HomePage {
         const content = document.getElementById('new-post').value;
         if (!content.trim()) return;
 
-        // TODO: Implémenter la création de post
-        console.log("Création d'un nouveau post:", content);
+        // Envoie le nouveau post via WebSocket
+        wsService.send('newPost', {
+            content: content,
+            date: new Date().toISOString(),
+            author: document.getElementById('user-name').textContent
+        });
+
+        // Ferme la modale et vide le champ
+        document.getElementById('post-modal').style.display = 'none';
+        document.getElementById('new-post').value = '';
+    }
+
+    addPostToDOM(postData) {
+        const postsContainer = document.getElementById('posts-container');
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+
+        const date = new Date(postData.date).toLocaleString();
+
+        postElement.innerHTML = `
+            <div class="post-header">
+                <span class="post-author">${postData.author}</span>
+                <span class="post-date">${date}</span>
+            </div>
+            <div class="post-content">
+                ${postData.content}
+            </div>
+            <div class="post-actions">
+                <button class="edit-btn">Modifier</button>
+                <button class="delete-btn">Supprimer</button>
+            </div>
+        `;
+
+        postsContainer.insertBefore(postElement, postsContainer.firstChild);
     }
 }
 
-// Initialiser la page quand le DOM est chargé
+// Initialisation
 document.addEventListener('DOMContentLoaded', () => {
     if (Router.isAuthenticated()) {
         new HomePage();

@@ -24,6 +24,9 @@ func NewUpgrader(db *sql.DB) websocket.Upgrader {
 			}
 
 			log.Println("Connexion WebSocket acceptée pour session :", cookie.Value)
+			// Dans la fonction CheckOrigin
+			log.Printf("Headers reçus: %+v\n", r.Header)
+			log.Printf("Cookies reçus: %+v\n", r.Cookies())
 			return true // Accepter la connexion
 		},
 	}
