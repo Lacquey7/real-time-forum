@@ -46,13 +46,8 @@ function showLoginForm() {
 
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem(
-          'userData',
-          JSON.stringify({
-            message: data.message,
-            accessToken: data.accessToken,
-          })
-        );
+        console.log('Login successful:', data);
+        console.log('Cookies:', document.cookie); // Vérifiez les cookies dans la console
 
         window.location.href = '/';
       } else {
@@ -65,8 +60,8 @@ function showLoginForm() {
   });
 
   document.getElementById('register-link').addEventListener('click', (e) => {
-    //e.preventDefault();
-    //showRegistrationForm();
+    e.preventDefault();
+    showRegistrationForm();
   });
 }
 
@@ -155,6 +150,7 @@ function showRegistrationForm() {
           age: age,
           genre: genre,
         }),
+        credentials: 'include', // Important pour inclure les cookies dans la requête
       });
 
       const data = await response.json();
@@ -168,7 +164,7 @@ function showRegistrationForm() {
       }
     } catch (error) {
       console.error('register error:', error);
-      alert('Login failed. Please try again.');
+      alert('Registration failed. Please try again.');
     }
   });
 
