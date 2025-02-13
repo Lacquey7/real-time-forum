@@ -1,15 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Real-Time-Forum</title>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <title>Real-Time-Forum</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
 <body>
+<!-- Structure de base -->
+<div id="main-container" class="page">
+  <!-- Le contenu sera injecté ici -->
+</div>
 
-<!-- Point d'entrée -->
-<script src="src/singlePageRouting.js"></script>
+<!-- Container pour auth -->
+<div id="auth-container" class="page">
+  <!-- Le contenu d'authentification sera injecté ici -->
+</div>
 
 <!-- error handling-->
 <div id="error-container" style="display: none;"></div>
+
+<!-- Scripts -->
+<script type="module" src="src/login-page/app.js"></script>
+<script type="module" src="src/home-page/home.app.js"></script>
 </body>
 </html>

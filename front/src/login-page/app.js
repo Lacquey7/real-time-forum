@@ -1,11 +1,26 @@
-document.addEventListener('DOMContentLoaded', () => {
+import Router from "../singlePageRouting.js";
+
+
+  // Ajouter l'écouteur pour le bouton logout
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      Router.logout();
+    });
+  }
+
+  // Ensuite initialiser le routeur
+  Router.init();
+
+  // Puis afficher le formulaire de login
   showLoginForm();
-});
+
 
 function showLoginForm() {
   const loginForm = document.createElement('div');
   loginForm.classList.add('login-container');
   loginForm.innerHTML = `
+<div id="auth-container" class="page">
       <form id="login-form">
           <h2>Login</h2>
          <div class="form-group">
@@ -17,6 +32,7 @@ function showLoginForm() {
           <button type="submit">Login</button>
           <p>Don't have an account? <a href="#" id="register-link">Register</a></p>
       </form>
+    </div>
   `;
 
   document.body.appendChild(loginForm);
@@ -47,7 +63,8 @@ function showLoginForm() {
       if (response.ok) {
         localStorage.setItem('userData', JSON.stringify({ message: data.message }));
         const homeUrl = new URL('/home', window.location.origin);
-        window.location.href = homeUrl;
+        localStorage.setItem('accessToken', data.token); // stocke le token
+        Router.navigateTo('main'); // utilise le routeur
       } else {
         alert(data.message || 'Login failed');
       }
@@ -67,6 +84,7 @@ function showRegistrationForm() {
   const registerForm = document.createElement('div');
   registerForm.classList.add('login-container');
   registerForm.innerHTML = `
+<div id="auth-container" class="page">
       <form id="register-form">
           <h2>Register</h2>
           <div class="form-group">
@@ -101,6 +119,7 @@ function showRegistrationForm() {
           <button type="submit">Register</button>
           <p>Already have an account? <a href="#" id="login-link">Login</a></p>
       </form>
+    </div>
   `;
 
   document.querySelector('.login-container').replaceWith(registerForm);
@@ -153,7 +172,7 @@ function showRegistrationForm() {
       const data = await response.json();
       if (response.ok) {
         alert('Registration successful! Please login.');
-        location.reload();
+        Router.navigateTo('auth')
       } else {
         alert(data.message || 'Registration failed');
       }
@@ -164,7 +183,7 @@ function showRegistrationForm() {
 
   document.getElementById('login-link').addEventListener('click', (e) => {
     e.preventDefault();
-    location.reload();
+    Router.navigateTo('auth');
   });
 }
 
