@@ -6,15 +6,15 @@ import (
 	"real-time-forum/models"
 )
 
-func (h *Hub) broadcastNewUser(sessionID string) {
+func (h *Hub) broadcastNewUser(username string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	log.Printf("✅ Nouvel utilisateur connecté : %s\n", sessionID)
+	log.Printf("✅ Nouvel utilisateur connecté : %s\n", username)
 
 	msg := models.UserStatus{
 		Type:    "new_user",
-		Content: []string{sessionID},
+		Content: []string{username},
 	}
 
 	// Liste des clients à supprimer après la diffusion du message

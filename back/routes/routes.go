@@ -20,6 +20,10 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocket.Hub) {
 		handlers.Post(w, r, db)
 	})
 
+	mux.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.PrivateMessage(db, w, r)
+	})
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../front/index.html")
 	})
@@ -28,6 +32,6 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocket.Hub) {
 
 	// Route WebSocket corrigée avec `hub`
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		hub.HandleConnections(w, r)
+		hub.HandleConnections(db, w, r)
 	})
 }

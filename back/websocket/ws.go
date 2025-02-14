@@ -31,7 +31,7 @@ func NewUpgrader(db *sql.DB) websocket.Upgrader {
 	}
 }
 
-func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HandleConnections(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	upgrader := NewUpgrader(h.DB) // Crée un Upgrader avec accès à la DB
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -48,15 +48,17 @@ func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
 
 	sessionID := cookie.Value
 
-	// Ajout du client au hub
-	h.clients[conn] = sessionID
+	username := utils.GetUsername(db, sessionID)
 
-	h.broadcastNewUser(sessionID)
+	// Ajout du client au hub
+	h.clients[conn] = username
+
+	h.broadcastNewUser(username)
 
 	h.register <- conn
 
 	defer func() {
-		h.BroadcastDisconnectedUser(sessionID)
+		h.BroadcastDisconnectedUser(username)
 
 		h.mu.Lock()
 		delete(h.clients, conn)

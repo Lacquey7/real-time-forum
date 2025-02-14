@@ -6,13 +6,13 @@ import (
 	"real-time-forum/models"
 )
 
-func (h *Hub) BroadcastDisconnectedUser(sessionID string) {
+func (h *Hub) BroadcastDisconnectedUser(username string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	msg := models.UserStatus{
 		Type:    "user_disconnected",
-		Content: []string{sessionID},
+		Content: []string{username},
 	}
 
 	// Liste des clients à supprimer
@@ -20,7 +20,7 @@ func (h *Hub) BroadcastDisconnectedUser(sessionID string) {
 
 	for client, clientSessionID := range h.clients {
 		// ✅ Ne pas envoyer à l'utilisateur qui se déconnecte
-		if clientSessionID == sessionID {
+		if clientSessionID == username {
 			toRemove = append(toRemove, client) // Ajouter pour suppression
 			continue
 		}
