@@ -20,6 +20,11 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocket.Hub) {
 		http.ServeFile(w, r, "../front/index.html")
 	})
 
+	// Nouvelle route pour la vérification d'authentification
+	mux.HandleFunc("/check-auth", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CheckAuth(w, r, db)
+	})
+
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../front/static"))))
 
 	// Route WebSocket corrigée avec `hub`
