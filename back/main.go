@@ -2,22 +2,20 @@ package main
 
 import (
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"real-time-forum/routes"
-	"real-time-forum/websocket"
-
-	_ "github.com/mattn/go-sqlite3"
+	"real-time-forum/websocketFile"
 )
 
 // Middleware CORS
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Configuration des en-têtes CORS
-		w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:5500")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		// Pour les requêtes OPTIONS, on répond sans exécuter le handler suivant
 		if r.Method == http.MethodOptions {
@@ -42,7 +40,7 @@ func main() {
 		}
 	}(db)
 
-	hub := websocket.NewHub(db)
+	hub := websocketFile.NewHub(db)
 	go hub.Run()
 
 	mux := http.NewServeMux()
@@ -52,6 +50,6 @@ func main() {
 	// Ajout du middleware CORS
 	handlerWithCORS := corsMiddleware(mux)
 
-	log.Println("Serveur démarré sur le port http://localhost:8080")
+	log.Println("Serveur démarré sur le port 8080")
 	log.Fatal(http.ListenAndServe(":8080", handlerWithCORS))
 }

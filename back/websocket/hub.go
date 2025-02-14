@@ -3,7 +3,6 @@ package websocket
 import (
 	"database/sql"
 	"github.com/gorilla/websocket"
-	"real-time-forum/models"
 	"sync"
 )
 
@@ -43,17 +42,8 @@ func (h *Hub) Run() {
 			}
 		case message := <-h.broadcast:
 			h.mu.Lock()
-			msg := message.(models.Message) // Convertir l'interface en struct Message
 			for client := range h.clients {
-				if client == msg.Sender {
-					continue // Ne pas envoyer le message à l'expéditeur
-				}
-				msgToSend := struct {
-					Content string `json:"content"`
-				}{
-					Content: msg.Content,
-				}
-				err := client.WriteJSON(msgToSend)
+				err := client.WriteJSON(message)
 				if err != nil {
 					client.Close()
 					delete(h.clients, client)
