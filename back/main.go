@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"real-time-forum/routes"
-	"real-time-forum/websocket"
+	"real-time-forum/websocketFile"
 )
 
 // Middleware CORS
@@ -40,7 +40,7 @@ func main() {
 		}
 	}(db)
 
-	hub := websocket.NewHub(db)
+	hub := websocketFile.NewHub(db)
 	go hub.Run()
 
 	mux := http.NewServeMux()

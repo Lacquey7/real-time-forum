@@ -35,7 +35,7 @@ func PrivateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCreateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request, userId string) {
-	var messageStruc models.PrivateMessage
+	var messageStruc models.PrivateMessageReceived
 
 	// Décodage du JSON reçu
 	err := json.NewDecoder(r.Body).Decode(&messageStruc)

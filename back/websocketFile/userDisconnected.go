@@ -1,4 +1,4 @@
-package websocket
+package websocketFile
 
 import (
 	"github.com/gorilla/websocket"
