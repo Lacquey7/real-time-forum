@@ -23,22 +23,20 @@ func Comment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID == "" {
-		utils.SendErrorResponse(w, http.StatusUnauthorized, "Utilisateur invalide")
-		return
-	}
-
-	idStr := strings.TrimPrefix(r.URL.Path, "/comment/")
-	postID, err := strconv.Atoi(idStr)
-	if err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid post ID")
-		return
-	}
-
 	switch r.Method {
 	case http.MethodPost:
+		if userID == "" {
+			utils.SendErrorResponse(w, http.StatusUnauthorized, "Utilisateur invalide")
+			return
+		}
 		handleCreateComment(db, w, r, userID)
 	case http.MethodGet:
+		idStr := strings.TrimPrefix(r.URL.Path, "/comment/")
+		postID, err := strconv.Atoi(idStr)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid post ID")
+			return
+		}
 		handleComment(db, w, postID)
 	default:
 		utils.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
