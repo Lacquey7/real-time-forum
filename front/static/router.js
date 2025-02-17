@@ -17,35 +17,16 @@ const router = {
         await router.handleLocation();
     },
 
-    async checkAuth() {
-        try {
-            const response = await fetch('http://localhost:8080/check-auth', {
-                credentials: 'include'
-            });
-            return response.ok;
-        } catch (error) {
-            return false;
-        }
-    },
-
     async checkAndRender() {
-        console.log("Checking authentication...");
-        const isAuthenticated = await router.checkAuth();
-        console.log("Is authenticated:", isAuthenticated);
         const container = document.getElementById('app');
+        if (!container) return;
 
-        if (!isAuthenticated) {
-            console.log("Not authenticated, showing login form");
-            if (container) {
-                container.innerHTML = '';
-            }
-            showLoginForm();
-            return;
+        try {
+            container.innerHTML = await home.render();
+            await home.afterRender();
+        } catch (error) {
+            console.error('Render error:', error);
         }
-
-        console.log("Authenticated, rendering home");
-        await router.render();
-        //showLoginForm()
     },
 
     render: async () => {
@@ -60,4 +41,5 @@ const router = {
         }
     }
 };
+
 export default router;

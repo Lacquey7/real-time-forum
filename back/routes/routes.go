@@ -24,6 +24,10 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.Logout(db, w, r)
 	})
 
+	mux.HandleFunc("/checkAuth", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CheckAuth(w, r, db)
+	})
+
 	mux.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.PrivateMessage(db, w, r)
 	})
