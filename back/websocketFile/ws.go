@@ -1,11 +1,13 @@
-package websocket
+package websocketFile
 
 import (
 	"database/sql"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"real-time-forum/models"
+	"real-time-forum/utils"
+
+	"github.com/gorilla/websocket"
 )
 
 func NewUpgrader(db *sql.DB) websocket.Upgrader {
@@ -30,17 +32,38 @@ func NewUpgrader(db *sql.DB) websocket.Upgrader {
 	}
 }
 
-func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HandleConnections(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	upgrader := NewUpgrader(h.DB) // Crée un Upgrader avec accès à la DB
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Erreur WebSocket:", err)
 		return
 	}
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		utils.SendErrorResponse(w, 401, "Missing Cookie")
+		conn.Close()
+		return
+	}
+
+	sessionID := cookie.Value
+
+	username := utils.GetUsername(db, sessionID)
+
 	// Ajout du client au hub
+	h.clients[conn] = username
+
+	h.broadcastNewUser(username)
+
 	h.register <- conn
 
 	defer func() {
+		h.BroadcastDisconnectedUser(username)
+
+		h.mu.Lock()
+		delete(h.clients, conn)
+		h.mu.Unlock()
 		h.unregister <- conn
 		conn.Close()
 	}()
@@ -52,13 +75,22 @@ func (h *Hub) HandleConnections(w http.ResponseWriter, r *http.Request) {
 		var msg models.Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			log.Println("Erreur WebSocket lecture:", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				log.Println("🚨 Connexion WebSocket fermée de manière inattendue:", err)
+			} else {
+				log.Println("ℹ️ Connexion WebSocket fermée proprement.")
+			}
 			break
 		}
-		log.Printf("📩 Message reçu : %s\n", msg.Content)
+		log.Printf("📩 Message reçu : %s\n", msg.Type)
 
-		msg.Sender = conn
-
-		h.broadcast <- msg
+		switch msg.Type {
+		case "get_user":
+			h.sendConnectedUsers(conn)
+		default:
+			// Par exemple, ajouter l'expéditeur au message et le diffuser
+			msg.Sender = conn
+			h.broadcast <- msg
+		}
 	}
 }
