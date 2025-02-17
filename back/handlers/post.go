@@ -26,12 +26,11 @@ func Post(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.SendErrorResponse(w, http.StatusUnauthorized, "Utilisateur invalide")
 		return
 	}
-
 	switch r.Method {
 	case http.MethodPost:
 		handleCreatePost(w, r, db, userID)
 	case http.MethodGet:
-		handleGetPosts(w, r, db)
+		handleGetPosts(w, r, db, userID)
 	default:
 		utils.SendErrorResponse(w, http.StatusMethodNotAllowed, "Méthode non autorisée")
 	}
@@ -68,8 +67,8 @@ func handleCreatePost(w http.ResponseWriter, r *http.Request, db *sql.DB, userID
 	json.NewEncoder(w).Encode(response)
 }
 
-func handleGetPosts(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	posts, err := utils.GetPostsWithComments(db)
+func handleGetPosts(w http.ResponseWriter, r *http.Request, db *sql.DB, userID string) {
+	posts, err := utils.GetPostsWithComments(db, userID)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur lors de la récupération des posts")
 		return

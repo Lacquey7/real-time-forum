@@ -10,6 +10,8 @@ type ResponsePost struct {
 	Category  string `json:"category"`
 	Image     string `json:"image"`
 	CreatedAt string `json:"created_at"`
+	Liked     bool   `json:"liked"`
+	Disliked  bool   `json:"disliked"`
 }
 
 type ResponseComment struct {
@@ -19,4 +21,6 @@ type ResponseComment struct {
 	Likes     int    `json:"likes"`
 	Dislikes  int    `json:"dislikes"`
 	CreatedAt string `json:"created_at"`
+	Liked     bool   `json:"liked"`
+	Disliked  bool   `json:"disliked"`
 }

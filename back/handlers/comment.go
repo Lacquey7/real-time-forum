@@ -37,7 +37,7 @@ func Comment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid post ID")
 			return
 		}
-		handleComment(db, w, postID)
+		handleComment(db, w, postID, userID)
 	default:
 		utils.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
@@ -64,9 +64,9 @@ func handleCreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request, use
 	w.WriteHeader(http.StatusOK)
 }
 
-func handleComment(db *sql.DB, w http.ResponseWriter, postID int) {
+func handleComment(db *sql.DB, w http.ResponseWriter, postID int, userID string) {
 	// Récupérer les commentaires depuis la base de données
-	comments, err := utils.GetCommentsByPostID(db, postID)
+	comments, err := utils.GetCommentsByPostID(db, postID, userID)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Error retrieving comments")
 		return

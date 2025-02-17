@@ -19,6 +19,9 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Post(w, r, db)
 	})
+	mux.HandleFunc("/post/{id}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.UniquePost(db, w, r)
+	})
 	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Logout(db, w, r)
 	})
