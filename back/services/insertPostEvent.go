@@ -6,11 +6,27 @@ import (
 	"log"
 )
 
+func PostExists(db *sql.DB, postID int) (bool, error) {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM POST WHERE ID = ?)", postID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("erreur lors de la vérification de l'existence du post : %v", err)
+	}
+	return exists, nil
+}
+
 // Gère l'ajout ou la suppression d'un like sur un post
 func InsertPostLike(db *sql.DB, userID string, postID int) error {
+	exists, err := PostExists(db, postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("le post avec ID %d n'existe pas", postID)
+	}
 	// Vérifier si l'utilisateur a déjà liké
 	var existingLike int
-	err := db.QueryRow("SELECT COUNT(*) FROM LIKES WHERE USER_ID = ? AND POST_ID = ?", userID, postID).Scan(&existingLike)
+	err = db.QueryRow("SELECT COUNT(*) FROM LIKES WHERE USER_ID = ? AND POST_ID = ?", userID, postID).Scan(&existingLike)
 	if err != nil {
 		return fmt.Errorf("erreur lors de la vérification du like : %v", err)
 	}
@@ -51,9 +67,16 @@ func InsertPostLike(db *sql.DB, userID string, postID int) error {
 
 // Gère l'ajout ou la suppression d'un dislike sur un post
 func InsertPostDislike(db *sql.DB, userID string, postID int) error {
+	exists, err := PostExists(db, postID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("le post avec ID %d n'existe pas", postID)
+	}
 	// Vérifier si l'utilisateur a déjà disliké
 	var existingDislike int
-	err := db.QueryRow("SELECT COUNT(*) FROM DISLIKE WHERE USER_ID = ? AND POST_ID = ?", userID, postID).Scan(&existingDislike)
+	err = db.QueryRow("SELECT COUNT(*) FROM DISLIKE WHERE USER_ID = ? AND POST_ID = ?", userID, postID).Scan(&existingDislike)
 	if err != nil {
 		return fmt.Errorf("erreur lors de la vérification du dislike : %v", err)
 	}

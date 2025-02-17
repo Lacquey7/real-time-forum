@@ -6,10 +6,26 @@ import (
 	"log"
 )
 
+func CommentExist(db *sql.DB, postID int) (bool, error) {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM COMMENT WHERE ID = ?)", postID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("erreur lors de la vérification de l'existence du post : %v", err)
+	}
+	return exists, nil
+}
+
 func CommentEventLike(db *sql.DB, userID string, commentID int) error {
+	exists, err := CommentExist(db, commentID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("le post avec ID %d n'existe pas", commentID)
+	}
 	// Vérifier si l'utilisateur a déjà liké
 	var existingLike int
-	err := db.QueryRow("SELECT COUNT(*) FROM LIKE_COMMENT WHERE USERID = ? AND COMMENT_ID = ?", userID, commentID).Scan(&existingLike)
+	err = db.QueryRow("SELECT COUNT(*) FROM LIKE_COMMENT WHERE USERID = ? AND COMMENT_ID = ?", userID, commentID).Scan(&existingLike)
 	if err != nil {
 		return fmt.Errorf("erreur lors de la vérification du like : %v", err)
 	}
@@ -49,9 +65,16 @@ func CommentEventLike(db *sql.DB, userID string, commentID int) error {
 }
 
 func CommentEventDislike(db *sql.DB, userID string, commentID int) error {
+	exists, err := CommentExist(db, commentID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("le post avec ID %d n'existe pas", commentID)
+	}
 	// Vérifier si l'utilisateur a déjà disliké
 	var existingDislike int
-	err := db.QueryRow("SELECT COUNT(*) FROM DISLIKE_COMMENT WHERE USERID = ? AND COMMENT_ID = ?", userID, commentID).Scan(&existingDislike)
+	err = db.QueryRow("SELECT COUNT(*) FROM DISLIKE_COMMENT WHERE USERID = ? AND COMMENT_ID = ?", userID, commentID).Scan(&existingDislike)
 	if err != nil {
 		return fmt.Errorf("erreur lors de la vérification du dislike : %v", err)
 	}

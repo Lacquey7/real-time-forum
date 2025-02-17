@@ -37,6 +37,9 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("/event", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Event(db, w, r)
 	})
+	mux.HandleFunc("/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Notification(db, w, r)
+	})
 
 	//Chargement des fichiers statics (HTML, CSS, JS)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
