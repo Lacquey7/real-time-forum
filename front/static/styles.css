@@ -2,60 +2,232 @@
   max-width: 400px;
   margin: 50px auto;
   padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  background-color: #2d2d2d; /* Même couleur que .post-container */
+  color: white;
 }
 
-.form-group {
-  margin-bottom: 15px;
-}
-
-input {
+/* Style des champs de formulaire */
+.form-group input {
   width: 100%;
   padding: 8px;
   margin-top: 5px;
-  border: 1px solid #ddd;
+  border: 1px solid #363636;
   border-radius: 4px;
+  background-color: #363636; /* Même couleur que .post */
+  color: white;
 }
 
-button {
+.form-group input:focus {
+  outline: none;
+  border-color: #ffa31a; /* Couleur orange du thème */
+}
+
+/* Style du bouton */
+.login-container button {
   width: 100%;
   padding: 10px;
-  background-color: #007bff;
+  background-color: #ffa31a; /* Même couleur que .add-post-button */
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-button:hover {
-  background-color: #0056b3;
+.login-container button:hover {
+  background-color: #ff8c00;
 }
 
-* Ajoutez ces styles à votre fichier CSS existant */ .form-group select {
+/* Style des liens */
+.login-container a {
+  color: #ffa31a;
+  text-decoration: none;
+}
+
+.login-container a:hover {
+  text-decoration: underline;
+}
+
+/* Style du titre */
+.login-container h2 {
+  color: #ffa31a;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+}
+
+.main-container {
+  display: flex;
+  padding: 80px 20px 20px;
+}
+
+.header-container {
+  border-radius: 8px;
+  background-color: #3c3c3c;
+  color: #ffffff;
+  position: fixed;
+  top: 10px;
+  left: 20px;
+  right: 20px;
+  height: 60px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+.header {
+  /* gardez votre CSS existant tel quel, sans animation */
+  display: flex;
+  padding-left: 10px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  background-color: black;
+  height: 50px;
+  width: 260px;
+  position: relative; /* ajout uniquement de ces */
+  overflow: hidden; /* deux propriétés */
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
   width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  animation: shine 4s infinite;
 }
 
-.form-group input[type='number'] {
+@keyframes shine {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.header-title {
+  background-color: #ffa31a;
+  color: black;
+  border-radius: 8px;
+}
+
+.log-out-button {
+  background-color: #ffa31a;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.post-container {
+  width: 70%;
+  background-color: #2d2d2d;
+  border-radius: 8px;
+  padding: 20px;
+  height: 100%; /* Prend toute la hauteur disponible */
+  margin-right: 20px;
+}
+
+.side-menu {
+  width: 30%;
+  background-color: #2d2d2d;
+  border-radius: 8px;
+  padding: 20px;
+  height: 100%; /* Prend toute la hauteur disponible */
+}
+
+.add-post {
+  position: fixed;
+  bottom: 30px;
+  right: 35%;
+  z-index: 100;
+}
+
+.add-post-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #ffa31a;
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-post-button:hover {
+  background-color: #ffa31a;
+}
+
+/* Styles des posts */
+.post {
+  background-color: #363636;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.post-header {
+  margin-bottom: 10px;
+}
+
+.author-name {
+  font-weight: bold;
+  color: #ffa31a;
+}
+
+.post-footer {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.post-footer button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #404040;
+  color: white;
+}
+
+/* Styles des messages */
+.message {
+  background-color: #363636;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+/* Couleurs générales du texte */
+.post-text,
+.message-text {
+  color: #ffffff;
+}
+
+.login-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.form-group select:focus,
-.form-group input[type='number']:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-/* Style pour les options du select */
-.form-group select option {
-  padding: 8px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }

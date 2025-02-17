@@ -16,6 +16,10 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Register(w, r, db)
 	})
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/homepage
 	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Post(w, r, db)
 	})

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"real-time-forum/routes"
@@ -15,8 +16,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-	
 
 		// Pour les requêtes OPTIONS, on répond sans exécuter le handler suivant
 		if r.Method == http.MethodOptions {
@@ -51,6 +50,6 @@ func main() {
 	// Ajout du middleware CORS
 	handlerWithCORS := corsMiddleware(mux)
 
-	log.Println("Serveur démarré sur le port http://localhost:8080")
+	log.Println("Serveur démarré sur le port 8080")
 	log.Fatal(http.ListenAndServe(":8080", handlerWithCORS))
 }
