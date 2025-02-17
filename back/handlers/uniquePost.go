@@ -128,15 +128,24 @@ func handleGetPost(db *sql.DB, w http.ResponseWriter, postID int, userID string)
 	var post models.ResponsePost
 
 	err := db.QueryRow(`
-		SELECT p.ID, u.USERNAME, p.CONTENT, p.LIKE, p.DISLIKE, p.COMMENT, p.CATEGORY, p.IMAGE, p.CREATED_AT,
-		       CASE WHEN ul.USER_ID IS NOT NULL THEN 1 ELSE 0 END AS Liked,
-		       CASE WHEN ud.USER_ID IS NOT NULL THEN 1 ELSE 0 END AS Disliked
+		SELECT 
+		    p.ID, 
+		    u.USERNAME, 
+		    p.CONTENT, 
+		    p.IMAGE, 
+		    p.CATEGORY, 
+		    p.CREATED_AT,
+		    COALESCE((SELECT COUNT(*) FROM LIKES WHERE POST_ID = p.ID), 0) AS Likes,
+		    COALESCE((SELECT COUNT(*) FROM DISLIKE WHERE POST_ID = p.ID), 0) AS Dislikes,
+		    COALESCE((SELECT COUNT(*) FROM COMMENT WHERE POST_ID = p.ID), 0) AS Comments,
+		    EXISTS (SELECT 1 FROM LIKES WHERE POST_ID = p.ID AND USER_ID = ?) AS Liked,
+		    EXISTS (SELECT 1 FROM DISLIKE WHERE POST_ID = p.ID AND USER_ID = ?) AS Disliked
 		FROM POST p
 		JOIN USER u ON p.USER_ID = u.ID
-		LEFT JOIN LIKES ul ON p.ID = ul.POST_ID AND ul.USER_ID = ?
-		LEFT JOIN DISLIKE ud ON p.ID = ud.POST_ID AND ud.USER_ID = ?
-		WHERE p.ID = ?`, userID, userID, postID).
-		Scan(&post.Id, &post.User, &post.Content, &post.Likes, &post.Dislikes, &post.Comments, &post.Category, &post.Image, &post.CreatedAt, &post.Liked, &post.Disliked)
+		WHERE p.ID = ?
+	`, userID, userID, postID).
+		Scan(&post.Id, &post.User, &post.Content, &post.Image, &post.Category, &post.CreatedAt,
+			&post.Likes, &post.Dislikes, &post.Comments, &post.Liked, &post.Disliked)
 
 	// Gestion des erreurs
 	if err == sql.ErrNoRows {
