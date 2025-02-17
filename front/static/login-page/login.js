@@ -15,19 +15,19 @@ export function showLoginForm() {
 
   console.log('Setting modal content');
   modal.innerHTML = `
-        <div class="modal-content">
-            <h2>RealTime Forum</h2>
-            <form id="login-form">
-                <div class="form-group">
-                    <input type="email" id="reg-email" placeholder="Email" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="password" placeholder="Password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-    `;
+    <div class="modal-content">
+        <h2 class="header">RealTime <span class="header-title">Forum</span></h2>
+        <form id="login-form">
+            <div class="form-group">
+                <input type="email" id="reg-email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+`;
 
   modal.style.display = 'flex';
   console.log('Modal should be visible now');
@@ -53,7 +53,7 @@ export function showLoginForm() {
 
       if (response.ok) {
         modal.remove();
-        window.location.reload();
+        //window.location.reload();
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Login failed');

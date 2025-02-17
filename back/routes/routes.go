@@ -25,6 +25,9 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Logout(db, w, r)
 	})
+
+	
+
 	mux.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.PrivateMessage(db, w, r)
 	})
