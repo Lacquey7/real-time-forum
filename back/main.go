@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"real-time-forum/routes"
 	"real-time-forum/websocketFile"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Middleware CORS
@@ -50,6 +51,6 @@ func main() {
 	// Ajout du middleware CORS
 	handlerWithCORS := corsMiddleware(mux)
 
-	log.Println("Serveur démarré sur le port 8080")
+	log.Println("Serveur démarré sur le port http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", handlerWithCORS))
 }

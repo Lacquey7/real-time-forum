@@ -44,12 +44,6 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../front/static"))))
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../front/index.html")
-	})
-
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../front/static"))))
-
 	// Route WebSocket corrigée avec `hub`
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		hub.HandleConnections(db, w, r)
