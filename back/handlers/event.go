@@ -9,9 +9,9 @@ import (
 )
 
 type ReceiveEvent struct {
-	Type        string `json:"type"`
-	ContentType string `json:"content_type"`
-	Id          int    `json:"id"`
+	Type        string `json:"type"`         //comment or post
+	ContentType string `json:"content_type"` // like dislikec
+	Id          int    `json:"id"`           // ID post
 }
 
 func Event(db *sql.DB, w http.ResponseWriter, r *http.Request) {
@@ -59,8 +59,18 @@ func handleCommentEvent(db *sql.DB, w http.ResponseWriter, userID string, event 
 	switch event.ContentType {
 	case "like":
 		err = services.CommentEventLike(db, userID, event.Id)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = services.CreateNotification(db, userID, "like_comment", event.Id)
 	case "dislike":
 		err = services.CommentEventDislike(db, userID, event.Id)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = services.CreateNotification(db, userID, "dislike_comment", event.Id)
 	default:
 		utils.SendErrorResponse(w, http.StatusBadRequest, "Unknown event type")
 		return
@@ -80,12 +90,22 @@ func handlePostEvent(db *sql.DB, w http.ResponseWriter, userID string, event Rec
 	switch event.ContentType {
 	case "like":
 		err = services.InsertPostLike(db, userID, event.Id)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	case "dislike":
 		err = services.InsertPostDislike(db, userID, event.Id)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	default:
 		utils.SendErrorResponse(w, http.StatusBadRequest, "Unknown event type")
 		return
 	}
+
+	err = services.CreateNotification(db, userID, event.ContentType, event.Id)
 
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())

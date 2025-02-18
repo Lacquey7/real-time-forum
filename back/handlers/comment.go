@@ -55,6 +55,13 @@ func handleCreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request, use
 		utils.SendErrorResponse(w, 400, "Missing required fields")
 		return
 	}
+
+	err = services.CreateNotification(db, userId, "comment", comment.IdPost)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid Insertion DB")
+		return
+	}
+	
 	err = services.InsertComment(db, userId, comment.Content, comment.IdPost)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid Insertion DB")

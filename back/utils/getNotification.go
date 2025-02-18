@@ -10,11 +10,12 @@ func GetNotification(db *sql.DB, userID string) ([]models.GetNotification, error
 	var notifications []models.GetNotification
 
 	rows, err := db.Query(`
-		SELECT ID, RECEIVER_ID, SENDER_ID, TYPE, RELATED_ID, CONTENT, STATUS, CREATED_AT
-		FROM NOTIFICATION
-		WHERE RECEIVER_ID = ?
-		ORDER BY CREATED_AT DESC
-	`, userID)
+	SELECT n.ID, u.USERNAME, n.TYPE, n.RELATED_ID, n.STATUS, n.CREATED_AT
+	FROM NOTIFICATION n
+	JOIN USER u ON n.SENDER_ID = u.ID
+	WHERE n.RECEIVER_ID = ?
+	ORDER BY n.CREATED_AT DESC
+`, userID)
 	if err != nil {
 		log.Println("Erreur lors de la récupération des notifications :", err)
 		return nil, err
@@ -25,7 +26,7 @@ func GetNotification(db *sql.DB, userID string) ([]models.GetNotification, error
 		var notification models.GetNotification
 		err := rows.Scan(
 			&notification.Id,
-			&notification.Sender,
+			&notification.Sender, // Remplace SENDER_ID par USERNAME
 			&notification.Type,
 			&notification.RelatedId,
 			&notification.Status,
