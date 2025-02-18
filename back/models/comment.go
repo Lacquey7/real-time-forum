@@ -8,3 +8,8 @@ type Comment struct {
 	Dislikes  int
 	CreatedAt string
 }
+
+type ReceiveComment struct {
+	IdPost  int    `json:"id_post"`
+	Content string `json:"content"`
+}
