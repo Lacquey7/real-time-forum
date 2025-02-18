@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Real-Time-Forum</title>
-    <link rel="stylesheet" href="static/styles.css">
-</head>
-<body>
-</body>
+    <link rel="stylesheet" href="./static/styles.css" />
+  </head>
+  <body>
+  <div id="app"></div>
+  <script type="module">
+    import router from './static/router.js';
+    document.addEventListener('DOMContentLoaded', () => {
+      router.init();
+    });
+  </script>
+  </body>
 </html>

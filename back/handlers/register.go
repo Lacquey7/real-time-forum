@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gofrs/uuid"
 	"net/http"
 	"real-time-forum/services"
 	"real-time-forum/utils"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 type RegisterInsert struct {

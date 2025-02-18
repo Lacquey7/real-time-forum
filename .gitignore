@@ -1,2 +1,7 @@
 .idea
 ./back/database/*
+/tests*
+/node_modules*
+package-lock.json
+package.json
+.babelrc

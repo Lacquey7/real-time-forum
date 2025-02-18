@@ -58,7 +58,7 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		HttpOnly: true,  // Empêche l'accès via JavaScript (protection XSS)
 		Secure:   false, // Mettre true en production (HTTPS obligatoire)
 		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
+		Path:     "http://127.0.0.1:5500/",
 	})
 
 	// Réponse JSON au client
