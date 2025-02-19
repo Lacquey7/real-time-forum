@@ -26,7 +26,9 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.Logout(db, w, r)
 	})
 
-	
+	mux.HandleFunc("/checkAuth", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CheckAuth(w, r, db)
+	})
 
 	mux.HandleFunc("/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.PrivateMessage(db, w, r)
@@ -39,6 +41,9 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	mux.HandleFunc("/event", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Event(db, w, r)
+	})
+	mux.HandleFunc("/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Notification(db, w, r)
 	})
 
 	//Chargement des fichiers statics (HTML, CSS, JS)

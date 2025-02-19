@@ -1,7 +1,8 @@
 // home.js
 import router from '../router.js';
 import template from './template.js';
-import { showLoginForm } from '../login-page/login.js';
+import { connectWebsocket, showLoginForm } from '../login-page/login.js';
+import createPost from './post-detail/post.js';
 
 let socket = null;
 
@@ -9,7 +10,6 @@ const home = {
   render: async () => {
     return template.render();
   },
-
   afterRender: async () => {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
@@ -27,10 +27,12 @@ const home = {
         showLoginForm();
       });
     }
+    connectWebsocket();
+    await handlePost();
   },
 };
 
-async function handlePost() {
+export async function handlePost() {
   try {
     const response = await fetch('http://localhost:8080/post', {
       method: 'GET',
@@ -42,15 +44,15 @@ async function handlePost() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log(data);
+      data.forEach((post) => createPost(post));
     } else {
-      throw new Error('Failed to post');
+      throw new Error('Failed to fetch posts');
     }
   } catch (error) {
     console.error('Post error:', error);
   }
 }
-handlePost();
+
 async function handleLogout() {
   try {
     if (socket) {
