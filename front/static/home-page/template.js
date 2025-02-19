@@ -15,7 +15,7 @@ const template = {
                 <div class="post-container">
                     <h2>Posts</h2>
                     <div id="posts-container">
-                        Loading content...
+                        
                     </div>
                 </div>
 

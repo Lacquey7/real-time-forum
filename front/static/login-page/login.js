@@ -1,3 +1,5 @@
+import {handlePost} from "../home-page/home.js";
+
 export function showLoginForm() {
   console.log("Showing login form");
   // Supprimer l'ancien modal s'il existe
@@ -10,7 +12,7 @@ export function showLoginForm() {
   console.log("Creating new modal");
   const modal = document.createElement('div');
   modal.classList.add('login-modal');
-  modal.style.background = 'rgba(0, 0, 0, 0.8)';  // Assurer que le fond est visible
+  modal.style.background = 'rgba(0, 0, 0, 0.8)'; // Assurer que le fond est visible
   document.body.appendChild(modal);
 
   console.log("Setting modal content");
@@ -27,7 +29,7 @@ export function showLoginForm() {
             <button type="submit">Login</button>
         </form>
     </div>
-`;
+  `;
 
   modal.style.display = 'flex';
   console.log("Modal should be visible now");
@@ -52,9 +54,11 @@ export function showLoginForm() {
       });
 
       if (response.ok) {
-
+        // Le login est réussi, attendre la réponse et ensuite lancer la connexion au WebSocket
         modal.remove();
-        //window.location.reload();
+        // Appel de la fonction pour se connecter au WebSocket
+        connectWebsocket();
+        await handlePost()
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Login failed');
@@ -64,4 +68,32 @@ export function showLoginForm() {
       alert('Login failed. Please try again.');
     }
   });
+}
+
+// Exemple de fonction pour lancer la connexion au WebSocket
+export function connectWebsocket() {
+  console.log("Connecting to WebSocket...");
+  const ws = new WebSocket('ws://localhost:8080/ws');
+
+  ws.onopen = () => {
+    console.log("WebSocket connection established");
+    // Envoi de la demande pour récupérer la liste des utilisateurs
+    const request = {
+      type: "get_user"
+    };
+    ws.send(JSON.stringify(request));
+  };
+
+  ws.onmessage = (event) => {
+    console.log("Message received:", event.data);
+    // Ici, tu peux ajouter le traitement de la réponse pour afficher la liste des users
+  };
+
+  ws.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket connection closed");
+  };
 }
