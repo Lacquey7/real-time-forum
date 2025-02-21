@@ -1,45 +1,18 @@
-// router.js
-import home from './home-page/home.js';
-import { showLoginForm } from './login-page/login.js';
+import { login} from "./login-page/login.js";
+import {home} from "./home-page/home.js";
 
-const router = {
-    init: async () => {
-        window.addEventListener('popstate', router.handleLocation);
-        await router.checkAndRender();
-    },
+export const router = () => {
+    const socket = new WebSocket("ws://localhost:8080/ws");
 
-    handleLocation: async () => {
-        await router.checkAndRender();
-    },
+    socket.onopen = () => {
+        home()
+    };
 
-    navigateTo: async (path) => {
-        window.history.pushState({}, '', path);
-        await router.handleLocation();
-    },
+    socket.onerror = (error) => {
+        login(); // Appelle login() si erreur
+    };
 
-    async checkAndRender() {
-        const container = document.getElementById('app');
-        if (!container) return;
-
-        try {
-            container.innerHTML = await home.render();
-            await home.afterRender();
-        } catch (error) {
-            console.error('Render error:', error);
-        }
-    },
-
-    render: async () => {
-        const container = document.getElementById('app');
-        if (!container) return;
-
-        try {
-            container.innerHTML = await home.render();
-            await home.afterRender();
-        } catch (error) {
-            console.error('Render error:', error);
-        }
-    }
+    socket.onclose = (event) => {
+        login(); // Appelle login() si déconnexion
+    };
 };
-
-export default router;

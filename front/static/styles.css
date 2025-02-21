@@ -1,456 +1,423 @@
-/* Style de base pour le login */
-.login-container {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  background-color: #2d2d2d;  /* Même couleur que .post-container */
-  color: white;
+/* Réinitialisation de quelques styles par défaut */
+* {
+    margin: 0;
+    padding: 0;
 }
 
-/* Style des champs de formulaire */
-.form-group input {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  border: 1px solid #363636;
-  border-radius: 4px;
-  background-color: #363636;  /* Même couleur que .post */
-  color: white;
+html, body {
+    height: 100vh;
+    overflow: hidden;
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: #ffa31a;  /* Couleur orange du thème */
-}
-
-/* Style du bouton */
-.login-container button {
-  width: 100%;
-  padding: 10px;
-  background-color: #ffa31a;  /* Même couleur que .add-post-button */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.login-container button:hover {
-  background-color: #ff8c00;
-}
-
-/* Style des liens */
-.login-container a {
-  color: #ffa31a;
-  text-decoration: none;
-}
-
-.login-container a:hover {
-  text-decoration: underline;
-}
-
-/* Style du titre */
-.login-container h2 {
-  color: #ffa31a;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-body {
-  font-family: 'Roboto', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #000000;
-}
-
+/* Conteneur principal : occupe 90% de la fenêtre et empêche le scroll global */
 .main-container {
-  display: flex;
-  padding: 80px 20px 20px;
+    height: 90vh;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    overflow: hidden;
 }
 
-
-.header-container {
-  border-radius: 12px;
-  background: rgba(60, 60, 60, 0.4); /* Transparence du fond */
-  color: #ffffff;
-  position: fixed;
-  top: 10px;
-  left: 20px;
-  right: 20px;
-  height: 60px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 1000;
-
-  /* Effet Glassmorphism */
-  backdrop-filter: blur(12px); /* Flou derrière */
-  -webkit-backdrop-filter: blur(12px); /* Compatibilité Safari */
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Bordure subtile */
-  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1); /* Effet de lumière doux */
+/* Styles des sections */
+.section {
+    width: 20%;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Effet de survol pour renforcer le style */
-.header-container:hover {
-  background: rgba(60, 60, 60, 0.6);
-  box-shadow: 0px 4px 15px rgba(255, 163, 26, 0.3); /* Glow subtil façon X */
+.section-title {
+    padding: 10px;
+    background-color: #0d3c59; /* Couleur bleue Twitter */
+    color: white;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.header {
-  /* gardez votre CSS existant tel quel, sans animation */
-  display: flex;
-  padding-left: 10px;
-  align-items: center;
-  gap: 10px;
-  border-radius: 8px;
-  background-color: black;
-  height: 50px;
-  width: 260px;
-  position: relative;  /* ajout uniquement de ces */
-  overflow: hidden;    /* deux propriétés */
+.section-content {
+    flex: 1;
+    overflow-y: auto; /* Seule la zone interne de la section sera scrollable */
+    padding: 10px;
 }
 
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.2),
-          transparent
-  );
-  transform: translateX(-100%);
-  animation: shine 4s infinite;
+/* Colonne centrale : posts */
+.posts-container {
+    flex: 1;
+    background-color: #fff;
 }
 
-@keyframes shine {
-  100% {
-    transform: translateX(100%);
-  }
-}
-.header-title {
-  background-color: #000000;
-  color: #ffffff;
-  border-radius: 8px;
+/* Utilisateurs */
+.user-item {
+    margin: 5px 0;
 }
 
-.log-out-button {
-  background-color: #ffa31a;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.post-container {
-  width: 70%;
-  background-color: #2d2d2d;
-  border-radius: 8px;
-  padding: 20px;
-  height: 100%; /* Prend toute la hauteur disponible */
-  margin-right: 20px;
-}
-
-
-.side-menu {
-  width: 30%;
-  background-color: #2d2d2d;
-  border-radius: 8px;
-  padding: 20px;
-  height: 100%; /* Prend toute la hauteur disponible */
-}
-
-.add-post {
-  position: fixed;
-  bottom: 30px;
-  right: 35%;
-  z-index: 100;
-}
-
-.add-post-button {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #ffa31a;
-  color: white;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.add-post-button:hover {
-  background-color: #ffa31a;
-}
-
-/* Styles des posts */
+/* Style d'un post */
 .post {
-  background-color: #363636;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
-  transition: transform 0.2s ease-in-out;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #e1e8ed;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.post:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 10px rgba(255, 163, 26, 0.3);
-}
-
+/* Entête du post */
 .post-header {
-  margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
 }
 
-.author-name {
-  font-weight: bold;
-  color: #ffa31a;
+.post-date {
+    color: #657786; /* Gris secondaire de Twitter */
+    font-size: 0.8em;
 }
 
-.post-footer {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
+/* Contenu du post : si le contenu est trop long, cette zone devient scrollable */
+.post-content {
+    margin: 5px 0;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
-.post-footer button {
-  padding: 8px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #404040;
-  color: white;
+/* Section des interactions */
+.post-interactions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
 }
 
-/* Styles des messages */
+/* Boutons d'interaction */
+.post-button {
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #e1e8ed; /* Fond clair */
+    color: #14171a; /* Texte sombre */
+}
+
+.post-button.like.liked {
+    background-color: #E0245E; /* Rouge Twitter pour le like */
+    color: #fff;
+}
+
+.post-button.dislike.disliked {
+    background-color: #657786; /* Gris secondaire pour le dislike */
+    color: #fff;
+}
+
+/* Icônes */
+.icon {
+    fill: currentColor;
+}
+
+/* Section commentaires */
+.comment-section {
+    margin-top: 10px;
+    padding: 5px;
+    background-color: #f5f8fa; /* Fond très clair de Twitter */
+    border-radius: 5px;
+}
+
+.comment-title {
+    font-weight: bold;
+}
+
+/* Style des messages */
 .message {
-  background-color: #363636;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 15px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #e1e8ed;
+    border-radius: 5px;
 }
 
-/* Couleurs générales du texte */
-.post-text, .message-text {
-  color: #ffffff;
+/* Thème X Twitter en noir et blanc */
+.x-twitter {
+    background-color: #fff;
+    color: #000;
 }
 
-.login-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+/* Surcharge des sections */
+.x-twitter .section {
+    background-color: #f5f5f5;
 }
 
-.modal-content {
-  background-color: rgba(81, 81, 81, 0.8);
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 1);
+.x-twitter .section-title {
+    background-color: #000;
+    color: #fff;
 }
 
-/* Style du titre de la modal */
-.modal-content .header {
-  display: flex;
-  padding-left: 10px;
-  align-items: center;
-  gap: 10px;
-  border-radius: 8px;
-  background-color: black;
-  height: 50px;
-  width: 200px;
-  position: relative;
-  overflow: hidden;
-  margin: 0 auto 20px;
-  color: white;
+/* Surcharge de la colonne centrale */
+.x-twitter .posts-container {
+    background-color: #fff;
 }
 
-.modal-content .header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.2),
-          transparent
-  );
-  transform: translateX(-100%);
-  animation: shine 3s infinite;
+/* Surcharge des posts */
+.x-twitter .post {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: none;
 }
 
-.modal-content .header-title {
-  background-color: #ffa31a;
-  color: black;
-  border-radius: 8px;
-}
-
-#login-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  flex: 1;          /* Prend l'espace restant */
-  justify-content: center;  /* Centre verticalement */
-}
-
-.form-group {
-  width: 70%;
-}
-
-#login-form button {
-  margin-top: 10px;
-  width: 20%;  /* Pour que le bouton ait la même largeur que les inputs */
-}
-
-/* Style général des posts */
-.post {
-  width: 100%;
-  max-width: 600px;
-  background: #1e1e1e; /* Fond sombre pour un style moderne */
-  border-radius: 12px;
-  padding: 15px;
-  margin: 10px auto;
-  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.05); /* Légère ombre pour du relief */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid #2a2a2a;
-}
-
-/* Effet au survol */
-.post:hover {
-  transform: translateY(-2px);
-  box-shadow: 0px 4px 15px rgba(255, 163, 26, 0.2); /* Effet lumineux façon X */
-}
-
-/* Conteneur de l'en-tête du post */
-.post-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-/* Nom de l'utilisateur */
-.post-username {
-  font-size: 16px;
-  font-weight: bold;
-  color: #ffa31a; /* Couleur orange pour mettre en avant le nom */
-}
-
-/* Catégorie du post */
-.post-category {
-  font-size: 14px;
-  color: #888;
-  font-style: italic;
+/* Entête des posts */
+.x-twitter .post-header {
+    border-bottom: 1px solid #ccc;
 }
 
 /* Date du post */
-.post-date {
-  font-size: 12px;
-  color: #666;
+.x-twitter .post-date {
+    color: #666;
 }
 
-/* Contenu du post */
-.post-content {
-  font-size: 16px;
-  color: #e0e0e0;
-  margin-top: 10px;
-  line-height: 1.5;
+/* Boutons d'interaction */
+.x-twitter .post-button {
+    background-color: #ccc;
+    color: #000;
 }
 
-/* Image du post */
-.post-image {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-top: 10px;
-  border: 1px solid #2a2a2a;
+.x-twitter .post-button.like.liked {
+    background-color: #000;
+    color: #fff;
 }
 
-/* Conteneur des interactions */
-.post-interactions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 10px;
+.x-twitter .post-button.dislike.disliked {
+    background-color: #333;
+    color: #fff;
 }
 
-/* Style des boutons d’interaction */
-.like-btn, .dislike-btn, .comment-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border: none;
-  background: none;
-  font-size: 14px;
-  cursor: pointer;
-  transition: color 0.2s ease, filter 0.2s ease;
+/* Section commentaires */
+.x-twitter .comment-section {
+    background-color: #fafafa;
 }
 
-/* Icône par défaut */
-.like-btn svg, .dislike-btn svg, .comment-btn svg {
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-  fill: transparent;
-  transition: fill 0.2s ease, stroke 0.2s ease, filter 0.2s ease;
+/* Messages */
+.x-twitter .message {
+    border: 1px solid #ccc;
 }
 
-/* Effet LED et animation des boutons */
-.like-btn:hover svg, .dislike-btn:hover svg, .comment-btn:hover svg {
-  filter: drop-shadow(0px 0px 6px rgba(255, 163, 26, 0.5));
+
+
+/* Conteneur principal */
+#login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    background-color: #ffffff; /* Fond blanc */
+    color: black;
+    font-family: Arial, sans-serif;
 }
 
-/* Like actif */
-.like-btn.liked svg {
-  fill: red;
-  stroke: red;
-  filter: drop-shadow(0px 0px 10px rgba(255, 0, 0, 0.5));
+/* Titre */
+#login-container h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
 }
 
-/* Dislike actif */
-.dislike-btn.disliked svg {
-  fill: white;
-  stroke: white;
-  filter: drop-shadow(0px 0px 10px rgb(255, 255, 255, 0.5));
+/* Formulaire */
+#login-container form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    background: #f9f9f9; /* Fond gris clair */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Commentaire (bulle de discussion) */
-.comment-btn svg {
-  stroke: white;
+/* Labels */
+#login-container label {
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 
-/* Bouton de commentaire au hover */
-.comment-btn:hover svg {
-  stroke: #ffa31a;
+/* Champs de saisie */
+#login-container input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: black;
+    margin-bottom: 15px;
 }
 
-/* Espacement des interactions */
-.like-btn, .dislike-btn, .comment-btn {
-  padding: 5px 10px;
-  border-radius: 8px;
+/* Placeholder */
+#login-container input::placeholder {
+    color: #666;
 }
 
-.like-btn:hover, .dislike-btn:hover, .comment-btn:hover {
-  background: rgba(255, 163, 26, 0.1);
+/* Bouton de connexion */
+#login-container button {
+    background-color: black; /* Bouton noir */
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
 }
+
+/* Effet au survol */
+#login-container button:hover {
+    background-color: #333;
+}
+
+/* Espacement entre les éléments */
+#login-container form > * {
+    width: 100%;
+}
+
+/* Conteneur principal */
+#register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    background-color: #ffffff; /* Fond blanc */
+    color: black;
+    font-family: Arial, sans-serif;
+}
+
+/* Titre */
+#register-container h1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* Formulaire */
+#register-container form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    background: #f9f9f9; /* Fond gris clair */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Labels */
+#register-container label {
+    font-weight: bold;
+    margin-bottom: 3px;
+    font-size: 0.9rem;
+}
+
+/* Champs de saisie */
+#register-container input,
+#register-container select {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: black;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+/* Placeholder */
+#register-container input::placeholder {
+    color: #666;
+}
+
+/* Bouton d'inscription */
+#register-container button {
+    background-color: black; /* Bouton noir */
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+/* Effet au survol */
+#register-container button:hover {
+    background-color: #333;
+}
+
+/* Réduction de l'espacement */
+#register-container form > * {
+    width: 100%;
+}
+
+/* Section des commentaires */
+.comment-section {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f5f8fa; /* Fond très clair, inspiré de Twitter */
+    border-radius: 8px;
+    border: 1px solid #e1e8ed; /* Bordure gris clair */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Titre des commentaires (cliquable) */
+.comment-title {
+    font-weight: bold;
+    cursor: pointer;
+    color: #000000; /* Bleu Twitter */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.comment-title:hover {
+    text-decoration: underline;
+}
+
+/* Conteneur des commentaires */
+.comments-container {
+    display: none; /* Masqué au départ */
+    padding-top: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Un commentaire individuel */
+.comment {
+    padding: 6px 10px;
+    margin: 5px 0;
+    background: #fff;
+    border: 1px solid #e1e8ed;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #14171a;
+    transition: background 0.3s ease-in-out;
+}
+
+.comment:hover {
+    background: #f0f0f0;
+}
+
+/* Animation d'apparition */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.comments-container.show {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
