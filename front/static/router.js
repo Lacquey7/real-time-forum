@@ -2,6 +2,8 @@ import { login } from "./login-page/login.js";
 import { home } from "./home-page/home.js";
 import { connectedUser } from "./websocket-integration/user-connected.js";
 import { disconnectedUser } from "./websocket-integration/user-disconnected.js";
+import {privateMessage} from "./home-page/privateMessage/privateMsg.js";
+import {majMessage} from "./home-page/messageModal/majMessage.js";
 
 let socket = null; // Déclare la variable mais ne l'initialise pas immédiatement
 
@@ -38,6 +40,12 @@ export const router = () => {
                     disconnectedUser(data.content);
                 }
             }
+
+            if (data.type === "private") {
+                privateMessage(data.content);
+                majMessage(data.content);
+            }
+
         } catch (error) {
             console.error("❌ Erreur lors de la réception du message WebSocket :", error);
         }

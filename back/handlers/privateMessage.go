@@ -8,13 +8,14 @@ import (
 	"real-time-forum/models"
 	"real-time-forum/services"
 	"real-time-forum/utils"
+	"real-time-forum/websocketFile"
 )
 
 type GetConversation struct {
 	Username string `json:"username"`
 }
 
-func PrivateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+func PrivateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request, hub *websocketFile.Hub) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusUnauthorized, "Missing cookie")
@@ -31,14 +32,14 @@ func PrivateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		handleGetMessage(db, w, r, userID)
 	case http.MethodPost:
-		handleCreateMessage(db, w, r, userID)
+		handleCreateMessage(db, w, r, userID, hub)
 
 	default:
 		utils.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
 }
 
-func handleCreateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request, userId string) {
+func handleCreateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request, userId string, hub *websocketFile.Hub) {
 	var messageStruc models.PrivateMessageReceived
 
 	// Décodage du JSON reçu
@@ -76,6 +77,8 @@ func handleCreateMessage(db *sql.DB, w http.ResponseWriter, r *http.Request, use
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Erreur interne lors de l'envoi du message")
 		return
 	}
+
+	hub.BroadcastPrivateMessage(db, messageStruc.Message, userId, userId2)
 
 	// Répondre avec l'ID du message inséré
 	response := map[string]interface{}{

@@ -14,23 +14,25 @@ export const messageModal = async (user) => {
 
     // Structure du contenu de la modal
     modal.innerHTML = `
-        <div class="chat-header">
-            <span class="chat-user">${user}</span>
-            <button class="chat-close">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="chat-body" id="chat-body">
-            <p class="chat-message received">Chargement des messages...</p>
-        </div>
-        <div class="chat-footer">
-            <input type="text" id="chat-input" placeholder="Écrire un message..." />
-            <button id="chat-send">➤</button>
-        </div>
-    `;
+    <div class="chat-header">
+      <span class="chat-user">${user}</span>
+      <button class="chat-close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+             viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" 
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="chat-body" id="chat-body">
+      <p class="chat-message received">Chargement des messages...</p>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" placeholder="Écrire un message..." />
+      <button id="chat-send">➤</button>
+    </div>
+  `;
 
     // Ajout du modal au body
     document.body.appendChild(modal);
@@ -48,7 +50,20 @@ export const messageModal = async (user) => {
         modal.remove();
     });
 
-    // 📌 Test API : Fonction pour charger les messages via GET
+    // Fonction pour formater la date
+    const formatDate = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleString("fr-FR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }).replace(",", "");
+    };
+
+    // 📌 Fonction pour charger les messages via GET
     const loadMessages = async () => {
         const url = `http://localhost:8080/message?user=${user}`;
         console.log("📡 Requête GET envoyée à :", url);
@@ -66,18 +81,18 @@ export const messageModal = async (user) => {
             const messages = await response.json();
             console.log("✅ Messages reçus :", messages);
 
-            chatBody.innerHTML = ""; // Effacer le message "Chargement..."
+            chatBody.innerHTML = ""; // Efface le message "Chargement..."
 
-            if (messages.length === 0) {
-                chatBody.innerHTML = `<p class="chat-message received">Aucun message.</p>`;
-                console.log("⚠️ Aucun message dans la conversation.");
+            if (!messages || messages.length === 0) {
+                chatBody.innerHTML = `<p class="chat-message received">Aucun message pour le moment. Soyez le premier à envoyer un message !</p>`;
+                console.log("⚠️ Aucun message trouvé.");
                 return;
             }
 
             messages.forEach(({ sender, message, date }) => {
                 const messageElement = document.createElement("p");
                 messageElement.classList.add("chat-message", sender === user ? "received" : "sent");
-                messageElement.innerHTML = `<strong>${sender}</strong>: ${message} <br><small>${date}</small>`;
+                messageElement.innerHTML = `${message} <br><small>${formatDate(date)}</small>`;
                 chatBody.appendChild(messageElement);
             });
 
@@ -92,7 +107,7 @@ export const messageModal = async (user) => {
     // Charger les messages à l'ouverture
     await loadMessages();
 
-    // 📌 Test API : Fonction d'envoi de message
+    // 📌 Fonction d'envoi de message
     const sendMessage = async () => {
         const messageText = inputField.value.trim();
         if (messageText === "") {
@@ -102,10 +117,21 @@ export const messageModal = async (user) => {
 
         console.log("📩 Envoi du message :", messageText);
 
-        // Ajouter immédiatement le message à l'UI
+        // Création de la date formatée pour le message envoyé
+        const now = new Date();
+        const formattedTime = now.toLocaleString("fr-FR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }).replace(",", "");
+
+        // Créer l'élément du message envoyé
         const messageElement = document.createElement("p");
         messageElement.classList.add("chat-message", "sent");
-        messageElement.textContent = messageText;
+        messageElement.innerHTML = `${messageText} <br><small class="chat-time">${formattedTime}</small>`;
         chatBody.appendChild(messageElement);
 
         // Vider l'input et faire défiler vers le bas
@@ -138,160 +164,153 @@ export const messageModal = async (user) => {
     });
 };
 
-// 📌 Test de script chargé
-console.log("✅ Script chargé correctement !");
 
-// 📌 Ajout des styles CSS pour le modal (Force l'affichage si caché)
-// 📌 Test de script chargé
-console.log("✅ Script chargé correctement !");
-
-// 📌 Ajout des styles CSS améliorés pour la modal (Design moderne)
+// 📌 Injection des styles CSS pour la modal (Design moderne)
 const style = document.createElement("style");
 style.innerHTML = `
-    /* 🌟 MODAL PRINCIPALE */
-    .chat-modal {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 350px;
-        background: #1E1E1E;
-        color: white;
-        border-radius: 12px;
-        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.5);
-        font-family: Arial, sans-serif;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        animation: fadeIn 0.3s ease-out;
-    }
+  /* 🌟 MODAL PRINCIPALE */
+  .chat-modal {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    background: #1E1E1E;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.5);
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease-out;
+    z-index: 1000;
+  }
 
-    /* 🌟 ANIMATION */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+  /* 🌟 ANIMATION */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-    /* 🌟 HEADER DE LA MODAL */
-    .chat-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        background: #292929;
-        font-weight: bold;
-        border-bottom: 1px solid #3A3A3A;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-    }
+  /* 🌟 HEADER DE LA MODAL */
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #292929;
+    font-weight: bold;
+    border-bottom: 1px solid #3A3A3A;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
 
-    .chat-close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        transition: transform 0.2s ease-in-out;
-    }
+  .chat-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+  }
 
-    .chat-close:hover {
-        transform: scale(1.1);
-    }
+  .chat-close:hover {
+    transform: scale(1.1);
+  }
 
-    .chat-close svg {
-        width: 22px;
-        height: 22px;
-    }
+  .chat-close svg {
+    width: 22px;
+    height: 22px;
+  }
 
-    /* 🌟 BODY (MESSAGES) */
-    .chat-body {
-        height: 250px;
-        overflow-y: auto;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        background: #1E1E1E;
-    }
+  /* 🌟 BODY (MESSAGES) */
+  .chat-body {
+    height: 250px;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    background: #1E1E1E;
+  }
 
-    /* 🌟 MESSAGE */
-    .chat-message {
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        max-width: 75%;
-        word-wrap: break-word;
-        font-size: 14px;
-        box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.2);
-    }
+  /* 🌟 MESSAGE */
+  .chat-message {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    max-width: 75%;
+    word-wrap: break-word;
+    font-size: 14px;
+    box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.2);
+  }
 
-    /* 🌟 MESSAGE REÇU */
-    .received {
-        align-self: flex-start;
-        background: #303030;
-        color: #EAEAEA;
-    }
+  /* 🌟 MESSAGE REÇU */
+  .received {
+    align-self: flex-start;
+    background: #303030;
+    color: #EAEAEA;
+  }
 
-    /* 🌟 MESSAGE ENVOYÉ */
-    .sent {
-        align-self: flex-end;
-        background: #0084FF;
-        color: white;
-    }
+  /* 🌟 MESSAGE ENVOYÉ */
+  .sent {
+    align-self: flex-end;
+    background: #0084FF;
+    color: white;
+  }
 
-    /* 🌟 FOOTER (ZONE D'INPUT) */
-    .chat-footer {
-        display: flex;
-        padding: 12px;
-        background: #292929;
-        border-top: 1px solid #3A3A3A;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-    }
+  /* 🌟 FOOTER (ZONE D'INPUT) */
+  .chat-footer {
+    display: flex;
+    padding: 12px;
+    background: #292929;
+    border-top: 1px solid #3A3A3A;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
 
-    /* 🌟 INPUT */
-    #chat-input {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 6px;
-        outline: none;
-        font-size: 14px;
-        background: #3A3A3A;
-        color: white;
-    }
+  /* 🌟 INPUT */
+  #chat-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+    background: #3A3A3A;
+    color: white;
+  }
 
-    /* 🌟 BOUTON ENVOYER */
-    #chat-send {
-        background: #0084FF;
-        color: white;
-        border: none;
-        padding: 10px 14px;
-        cursor: pointer;
-        border-radius: 6px;
-        margin-left: 8px;
-        font-weight: bold;
-        transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
-    }
+  /* 🌟 BOUTON ENVOYER */
+  #chat-send {
+    background: #0084FF;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-left: 8px;
+    font-weight: bold;
+    transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+  }
 
-    #chat-send:hover {
-        background: #006EDC;
-        transform: scale(1.1);
-    }
+  #chat-send:hover {
+    background: #006EDC;
+    transform: scale(1.1);
+  }
 
-    /* 🌟 SCROLLBAR MODERNE */
-    .chat-body::-webkit-scrollbar {
-        width: 6px;
-    }
+  /* 🌟 SCROLLBAR MODERNE */
+  .chat-body::-webkit-scrollbar {
+    width: 6px;
+  }
 
-    .chat-body::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 6px;
-    }
+  .chat-body::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 6px;
+  }
 `;
-document.head.appendChild(style);
-console.log("✅ Styles appliqués.");
 document.head.appendChild(style);
 console.log("✅ Styles appliqués.");

@@ -354,6 +354,7 @@ export const bodyHtml = () => {
         color: white;
         transition: background 0.3s;
         border-radius: 10px;
+        margin-bottom: 10px;
         cursor: pointer;
     }
 
