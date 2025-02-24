@@ -1,24 +1,25 @@
 export const messageModal = async (user) => {
     console.log("✅ messageModal appelée avec :", user);
 
-    // Vérifier si la modal existe déjà
-    if (document.getElementById("chat-modal")) {
-        console.log("⚠️ La modal existe déjà, elle ne sera pas recréée.");
-        return;
+    // Vérifier si une modal est déjà ouverte (via la classe .chat-modal)
+    const existingModal = document.querySelector(".chat-modal");
+    if (existingModal) {
+        console.log("⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle.");
+        existingModal.remove();
     }
 
     // Création du conteneur du modal
     const modal = document.createElement("div");
-    modal.id = "chat-modal";
-    modal.classList.add("chat-modal");
+    modal.id = `chat-modal-${user}`;
+    modal.classList.add("chat-modal"); // <-- classe pour le style
 
     // Structure du contenu de la modal
     modal.innerHTML = `
     <div class="chat-header">
       <span class="chat-user">${user}</span>
       <button class="chat-close">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-             viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" 
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+             viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -34,9 +35,9 @@ export const messageModal = async (user) => {
     </div>
   `;
 
-    // Ajout du modal au body
+    // Ajout de la modal au DOM
     document.body.appendChild(modal);
-    console.log("✅ Modal ajoutée au DOM :", document.getElementById("chat-modal"));
+    console.log("✅ Nouvelle modal ajoutée :", modal);
 
     // Sélection des éléments interactifs
     const closeButton = modal.querySelector(".chat-close");
@@ -75,31 +76,38 @@ export const messageModal = async (user) => {
             });
 
             console.log("🔄 Réponse HTTP reçue :", response.status);
-
             if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
             const messages = await response.json();
             console.log("✅ Messages reçus :", messages);
 
-            chatBody.innerHTML = ""; // Efface le message "Chargement..."
+            // Nettoyer la zone d'affichage
+            chatBody.innerHTML = "";
 
             if (!messages || messages.length === 0) {
-                chatBody.innerHTML = `<p class="chat-message received">Aucun message pour le moment. Soyez le premier à envoyer un message !</p>`;
-                console.log("⚠️ Aucun message trouvé.");
+                chatBody.innerHTML = `<p class="chat-message received">
+                    Aucun message pour le moment. Soyez le premier à envoyer un message !
+                </p>`;
                 return;
             }
 
+            // Affichage des messages reçus
             messages.forEach(({ sender, message, date }) => {
                 const messageElement = document.createElement("p");
-                messageElement.classList.add("chat-message", sender === user ? "received" : "sent");
+                messageElement.classList.add(
+                    "chat-message",
+                    sender === user ? "received" : "sent"
+                );
                 messageElement.innerHTML = `${message} <br><small>${formatDate(date)}</small>`;
                 chatBody.appendChild(messageElement);
             });
 
-            // Scroll vers le dernier message
+            // Scroll automatique vers le dernier message
             chatBody.scrollTop = chatBody.scrollHeight;
         } catch (error) {
-            chatBody.innerHTML = `<p class="chat-message received">Erreur de chargement des messages.</p>`;
+            chatBody.innerHTML = `<p class="chat-message received">
+                Erreur de chargement des messages.
+            </p>`;
             console.error("❌ Erreur lors du chargement des messages :", error);
         }
     };
@@ -117,7 +125,7 @@ export const messageModal = async (user) => {
 
         console.log("📩 Envoi du message :", messageText);
 
-        // Création de la date formatée pour le message envoyé
+        // Création de la date pour le message envoyé
         const now = new Date();
         const formattedTime = now.toLocaleString("fr-FR", {
             year: "numeric",
@@ -128,13 +136,13 @@ export const messageModal = async (user) => {
             second: "2-digit",
         }).replace(",", "");
 
-        // Créer l'élément du message envoyé
+        // Ajout immédiat du message côté client
         const messageElement = document.createElement("p");
         messageElement.classList.add("chat-message", "sent");
         messageElement.innerHTML = `${messageText} <br><small class="chat-time">${formattedTime}</small>`;
         chatBody.appendChild(messageElement);
 
-        // Vider l'input et faire défiler vers le bas
+        // Vider l'input et scroller en bas
         inputField.value = "";
         chatBody.scrollTop = chatBody.scrollHeight;
 
@@ -155,17 +163,17 @@ export const messageModal = async (user) => {
         }
     };
 
-    // Gestion du clic sur le bouton d'envoi
+    // Écouteurs sur le bouton et la touche Entrée
     sendButton.addEventListener("click", sendMessage);
-
-    // Gestion de la touche "Entrée" pour envoyer un message
     inputField.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
     });
 };
 
-
-// 📌 Injection des styles CSS pour la modal (Design moderne)
+/**
+ * CSS injecté (identique à ta version précédente)
+ * Assure-toi qu'il n'est pas déjà déclaré ailleurs, pour éviter les doublons.
+ */
 const style = document.createElement("style");
 style.innerHTML = `
   /* 🌟 MODAL PRINCIPALE */

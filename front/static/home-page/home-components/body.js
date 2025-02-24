@@ -1,4 +1,6 @@
+import {createMessageElement} from "../messageModal/messageGenerique.js";
 import {messageModal} from "../messageModal/messageModal.js";
+
 
 export const bodyHtml = () => {
     // Création de l'élément <main>
@@ -6,7 +8,7 @@ export const bodyHtml = () => {
     main.classList.add("main-container");
 
     // Fonction pour créer une section sticky avec un contenu scrollable
-    const createStickySection = (titleText) => {
+    const createStickySection = (titleText,id="") => {
         const section = document.createElement("div");
         section.classList.add("section");
 
@@ -17,7 +19,8 @@ export const bodyHtml = () => {
 
         // Contenu scrollable
         const content = document.createElement("div");
-        content.classList.add("section-content");
+        content.classList.add(`section-content`);
+        content.id = `${id}`
 
         section.appendChild(title);
         section.appendChild(content);
@@ -26,7 +29,7 @@ export const bodyHtml = () => {
 
     // Colonne gauche : Utilisateurs connectés
     const { section: usersContainer } = createStickySection("Utilisateurs connectés");
-
+    usersContainer.classList.add("users-container");
 
     // Section centrale : Posts
     const { section: postsContainer, content: postsContent } = createStickySection("Publications");
@@ -277,8 +280,8 @@ export const bodyHtml = () => {
     fetchPosts();
 
     // Colonne droite : Messages envoyés
-    const { section: messagesContainer, content: messagesContent } = createStickySection("Messages");
-
+    const { section: messagesContainer, content: messagesContent } = createStickySection("Messages", "messages-id");
+    messagesContainer.classList.add("messages-container");
     const messages = async () => {
         try {
             const response = await fetch("http://localhost:8080/conversation");
@@ -295,51 +298,18 @@ export const bodyHtml = () => {
     };
 
 // Appel de la fonction et affichage des messages
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat("fr-FR", {
-            weekday: "long",  // "lundi"
-            day: "2-digit",   // "24"
-            month: "long",    // "février"
-            year: "numeric",  // "2025"
-            hour: "2-digit",  // "10"
-            minute: "2-digit" // "13"
-        }).format(date);
-    };
+
 
     const displayMessages = async () => {
-        const conversations = await messages(); // Attendre que messages() retourne les données
+        const conversations = await messages(); // Récupération des messages depuis l'API
 
+        if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
+            return; // 🔥 On arrête la fonction immédiatement
+        }
+
+        // ✅ Ajout des messages uniquement si des conversations existent
         conversations.forEach((msg) => {
-            const msgElement = document.createElement("div");
-            msgElement.classList.add("conversation");
-
-            // Nom du destinataire (avec qui la conversation a lieu)
-            const msgTo = document.createElement("h3");
-            msgTo.classList.add("conversation-title");
-            msgTo.innerText = msg.username;
-
-            // Dernier message (Expéditeur + Contenu)
-            const msgContent = document.createElement("p");
-            msgContent.classList.add("last-message");
-            msgContent.innerHTML = `<strong>${msg.last_sender}:</strong> ${msg.last_message}`;
-
-            // Date du dernier message (formatée)
-            const msgDate = document.createElement("span");
-            msgDate.classList.add("message-date");
-            msgDate.innerText = `${formatDate(msg.last_message_date)}`;
-
-            msgElement.style.cursor = "pointer";
-
-            msgElement.addEventListener("click",  () => {
-                messageModal(msg.username)
-            })
-
-            // Ajout des éléments dans le container
-            msgElement.appendChild(msgTo);
-            msgElement.appendChild(msgContent);
-            msgElement.appendChild(msgDate);
-
+            const msgElement = createMessageElement(msg, messageModal);
             messagesContent.appendChild(msgElement);
         });
 

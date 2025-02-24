@@ -5,40 +5,37 @@ export const privateMessage = (data) => {
 
     console.log("📩 Nouveau message privé reçu de :", user, "| Message :", msg, "| Heure :", timestamp);
 
-    // Vérifie si la modal du bon utilisateur est ouverte
-    const modal = document.getElementById("chat-modal");
+    // Cherche la modal correspondant à l’utilisateur
+    const modal = document.getElementById(`chat-modal-${user}`);
     if (!modal) {
-        console.warn("⚠️ Aucun chat modal ouvert pour cet utilisateur.");
         return;
     }
 
+    // Vérifie l'utilisateur affiché dans la modal (optionnel si tu veux être sûr)
     const chatUser = modal.querySelector(".chat-user").textContent;
     if (chatUser !== user) {
-        console.warn(`⚠️ Message reçu de ${user}, mais la modal est ouverte pour ${chatUser}.`);
         return;
     }
 
     // Sélectionne le body du chat
     const chatBody = modal.querySelector("#chat-body");
 
-    // Formatte l'heure au format YYYY-MM-DD HH:mm:ss
+    // Formatage de la date
     const date = new Date(timestamp);
     const formattedTime = date.toLocaleString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
         year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-    }).replace(",", ""); // Supprime la virgule inutile
+    }).replace(",", "");
 
     // Crée un élément de message reçu
     const messageElement = document.createElement("div");
     messageElement.classList.add("chat-message", "received");
-
-    // Ajoute le message dans une structure claire
     messageElement.innerHTML = `
-        <p>${msg}</p>  
+        <p>${msg}</p>
         <small class="chat-time">${formattedTime}</small>
     `;
 
