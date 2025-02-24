@@ -20,7 +20,10 @@ func (h *Hub) broadcastNewUser(username string) {
 	// Liste des clients à supprimer après la diffusion du message
 	toRemove := make([]*websocket.Conn, 0)
 
-	for client := range h.clients {
+	for client, clientUsername := range h.clients {
+		if username == clientUsername {
+			continue
+		}
 		err := client.WriteJSON(msg)
 		if err != nil {
 			// Vérifier si c'est une fermeture propre

@@ -1,3 +1,5 @@
+import {messageModal} from "../messageModal/messageModal.js";
+
 export const bodyHtml = () => {
     // Création de l'élément <main>
     const main = document.createElement("main");
@@ -23,14 +25,8 @@ export const bodyHtml = () => {
     };
 
     // Colonne gauche : Utilisateurs connectés
-    const { section: usersContainer, content: usersContent } = createStickySection("Utilisateurs connectés");
-    const users = ["Alice", "Bob", "Charlie", "David"];
-    users.forEach((user) => {
-        const userElement = document.createElement("p");
-        userElement.innerText = user;
-        userElement.classList.add("user-item");
-        usersContent.appendChild(userElement);
-    });
+    const { section: usersContainer } = createStickySection("Utilisateurs connectés");
+
 
     // Section centrale : Posts
     const { section: postsContainer, content: postsContent } = createStickySection("Publications");
@@ -282,24 +278,114 @@ export const bodyHtml = () => {
 
     // Colonne droite : Messages envoyés
     const { section: messagesContainer, content: messagesContent } = createStickySection("Messages");
-    const messages = [
-        { to: "Charlie", content: "Salut Charlie, ça va ?" },
-        { to: "David", content: "N'oublie pas notre rendez-vous demain !" },
-    ];
 
-    messages.forEach((msg) => {
-        const msgElement = document.createElement("div");
-        msgElement.classList.add("message");
+    const messages = async () => {
+        try {
+            const response = await fetch("http://localhost:8080/conversation");
 
-        const msgTo = document.createElement("strong");
-        msgTo.innerText = "À " + msg.to + " : ";
-        const msgContent = document.createElement("span");
-        msgContent.innerText = msg.content;
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
+            }
 
-        msgElement.appendChild(msgTo);
-        msgElement.appendChild(msgContent);
-        messagesContent.appendChild(msgElement);
-    });
+            return await response.json();
+        } catch (error) {
+            console.error("Erreur lors du chargement des conversations:", error.message);
+            return []; // Retourne un tableau vide en cas d'erreur pour éviter les crashs
+        }
+    };
+
+// Appel de la fonction et affichage des messages
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat("fr-FR", {
+            weekday: "long",  // "lundi"
+            day: "2-digit",   // "24"
+            month: "long",    // "février"
+            year: "numeric",  // "2025"
+            hour: "2-digit",  // "10"
+            minute: "2-digit" // "13"
+        }).format(date);
+    };
+
+    const displayMessages = async () => {
+        const conversations = await messages(); // Attendre que messages() retourne les données
+
+        conversations.forEach((msg) => {
+            const msgElement = document.createElement("div");
+            msgElement.classList.add("conversation");
+
+            // Nom du destinataire (avec qui la conversation a lieu)
+            const msgTo = document.createElement("h3");
+            msgTo.classList.add("conversation-title");
+            msgTo.innerText = msg.username;
+
+            // Dernier message (Expéditeur + Contenu)
+            const msgContent = document.createElement("p");
+            msgContent.classList.add("last-message");
+            msgContent.innerHTML = `<strong>${msg.last_sender}:</strong> ${msg.last_message}`;
+
+            // Date du dernier message (formatée)
+            const msgDate = document.createElement("span");
+            msgDate.classList.add("message-date");
+            msgDate.innerText = `${formatDate(msg.last_message_date)}`;
+
+            msgElement.style.cursor = "pointer";
+
+            msgElement.addEventListener("click",  () => {
+                messageModal(msg.username)
+            })
+
+            // Ajout des éléments dans le container
+            msgElement.appendChild(msgTo);
+            msgElement.appendChild(msgContent);
+            msgElement.appendChild(msgDate);
+
+            messagesContent.appendChild(msgElement);
+        });
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+    .conversation {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        border-bottom: 1px solid #444;
+        background: #000000FF;
+        color: white;
+        transition: background 0.3s;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .conversation:hover {
+        background: #3a3b3c;
+    }
+
+    .conversation-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .last-message {
+        font-size: 14px;
+        color: #b0b3b8;
+        margin-bottom: 4px;
+    }
+
+    .message-date {
+        font-size: 12px;
+        color: #b0b3b8;
+        align-self: flex-end;
+    }
+`;
+
+// Ajout du style au <head>
+        document.head.appendChild(style);
+    };
+
+// Exécuter la fonction pour afficher les messages
+    displayMessages();
 
     // Assemblage des colonnes
     main.appendChild(usersContainer);

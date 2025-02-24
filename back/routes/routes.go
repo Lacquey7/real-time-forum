@@ -41,6 +41,10 @@ func SetupRoutes(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.Notification(db, w, r)
 	})
 
+	mux.HandleFunc("/conversation", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Conversation(db, w, r)
+	})
+
 	//Chargement des fichiers statics (HTML, CSS, JS)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../front/index.html")

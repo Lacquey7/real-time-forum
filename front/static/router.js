@@ -1,18 +1,64 @@
-import { login} from "./login-page/login.js";
-import {home} from "./home-page/home.js";
+import { login } from "./login-page/login.js";
+import { home } from "./home-page/home.js";
+import { connectedUser } from "./websocket-integration/user-connected.js";
+import { disconnectedUser } from "./websocket-integration/user-disconnected.js";
+
+let socket = null; // Déclare la variable mais ne l'initialise pas immédiatement
 
 export const router = () => {
-    const socket = new WebSocket("ws://localhost:8080/ws");
+    // 🔌 Si un WebSocket est déjà ouvert, on le ferme avant d'en créer un nouveau
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        closeWebSocket();
+    }
+
+    // 📡 Création d'une nouvelle connexion WebSocket
+    socket = new WebSocket("ws://localhost:8080/ws");
 
     socket.onopen = () => {
-        home()
+        console.log("✅ WebSocket connecté !");
+        home(); // Charge la page d'accueil
+        socket.send(JSON.stringify({ type: "get_user" })); // Demande la liste des utilisateurs
+    };
+
+    socket.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            console.log("📩 Message WebSocket reçu :", data);
+
+            if (data.type === "connected_users" || data.type === "new_user") {
+                if (data.content.length > 0 && data.content[0] !== "No users connected") {
+                    console.log("👥 Liste des utilisateurs connectés :", data.content);
+                    connectedUser(data.content);
+                }
+            }
+
+            if (data.type === "user_disconnected") {
+                if (data.content.length > 0 && data.content[0] !== "No users connected") {
+                    console.log("🚪 Utilisateur déconnecté :", data.content);
+                    disconnectedUser(data.content);
+                }
+            }
+        } catch (error) {
+            console.error("❌ Erreur lors de la réception du message WebSocket :", error);
+        }
     };
 
     socket.onerror = (error) => {
-        login(); // Appelle login() si erreur
+        console.error("⚠️ Erreur WebSocket :", error);
+        login(); // Redirige vers login() en cas d'erreur
     };
 
     socket.onclose = (event) => {
-        login(); // Appelle login() si déconnexion
+        console.warn("🔌 WebSocket fermé :", event.reason);
+        login(); // Redirige vers login() si la connexion est fermée
     };
+};
+
+// 🔥 Fonction pour fermer proprement le WebSocket
+export const closeWebSocket = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log("🛑 Fermeture du WebSocket...");
+        socket.close(1000, "Déconnexion de l'utilisateur");
+        socket = null; // Réinitialisation pour éviter d'appeler des événements sur un socket fermé
+    }
 };

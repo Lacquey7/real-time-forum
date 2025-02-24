@@ -13,3 +13,9 @@ type PrivateMessageSend struct {
 	Message        string `json:"message"`
 	MessageID      string `json:"message_id"`
 }
+
+type SendAllPrivateMessage struct {
+	Sender  string `json:"sender"`
+	Message string `json:"message"`
+	Date    string `json:"date"`
+}
