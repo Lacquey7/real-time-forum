@@ -13,3 +13,9 @@ type UserStatus struct {
 	Content []string        `json:"content"`
 	Sender  *websocket.Conn `json:"-"`
 }
+
+type PrivateMessage struct {
+	Type    string          `json:"type"`
+	Content []string        `json:"content"`
+	Sender  *websocket.Conn `json:"-"`
+}

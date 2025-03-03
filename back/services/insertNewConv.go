@@ -6,33 +6,39 @@ import (
 	"log"
 )
 
-func InsertNewConv(db *sql.DB, userId1, userId2 string) (string, error) {
+func InsertNewConv(db *sql.DB, senderId, receiverId string) (string, error) {
 	var convId string
 
-	// Vérifier si une conversation existe déjà avec ces deux utilisateurs
+	// Vérifier si une conversation existe déjà entre sender et receiver (dans les deux sens)
 	query := `
-		SELECT id FROM CONVERSATION 
-		WHERE (USER1ID = ? AND USER2ID = ?) OR (USER2ID = ? AND USER1ID = ?)
+		SELECT ID FROM CONVERSATION 
+		WHERE (USER1ID = ? AND USER2ID = ?) OR (USER1ID = ? AND USER2ID = ?)
 	`
-	err := db.QueryRow(query, userId1, userId2, userId2, userId1).Scan(&convId)
+	err := db.QueryRow(query, senderId, receiverId, receiverId, senderId).Scan(&convId)
 
 	if err == nil {
 		// Si une conversation existe déjà, on retourne son ID
+		log.Println("Conversation existante trouvée avec ID :", convId)
 		return convId, nil
 	} else if err != sql.ErrNoRows {
-		// S'il y a une autre erreur, on la log
+		// S'il y a une autre erreur SQL, on la log
 		log.Println("Erreur lors de la vérification de la conversation :", err)
 		return "", err
 	}
 
-	insertQuery := `INSERT INTO CONVERSATION (ID ,USER1ID, USER2ID) VALUES (?,?, ?)`
+	log.Println("Aucune conversation existante trouvée entre", senderId, "et", receiverId, "→ création d'une nouvelle conversation...")
+
+	// Insérer une nouvelle conversation avec senderId en USER1ID et receiverId en USER2ID
+	insertQuery := `INSERT INTO CONVERSATION (ID, USER1ID, USER2ID) VALUES (?, ?, ?)`
 	convUUID, _ := uuid.NewV4()
 	convId = convUUID.String()
-	_, err = db.Exec(insertQuery, convId, userId1, userId2)
+
+	_, err = db.Exec(insertQuery, convId, senderId, receiverId)
 	if err != nil {
 		log.Println("Erreur lors de l'insertion de la conversation :", err)
 		return "", err
 	}
 
+	log.Println("Nouvelle conversation créée avec ID :", convId)
 	return convId, nil
 }

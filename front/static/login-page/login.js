@@ -1,67 +1,102 @@
-export function showLoginForm() {
-  console.log("Showing login form");
-  // Supprimer l'ancien modal s'il existe
-  let oldModal = document.querySelector('.login-modal');
-  if (oldModal) {
-    console.log("Removing old modal");
-    oldModal.remove();
-  }
+import { router } from "../router.js";
+import { register } from "./register.js"; // Importer la fonction register
 
-  console.log("Creating new modal");
-  const modal = document.createElement('div');
-  modal.classList.add('login-modal');
-  modal.style.background = 'rgba(0, 0, 0, 0.8)';  // Assurer que le fond est visible
-  document.body.appendChild(modal);
+export const login = () => {
+  // Vider complètement le `body`
+  document.body.innerHTML = "";
 
-  console.log("Setting modal content");
-  modal.innerHTML = `
-    <div class="modal-content">
-        <h2 class="header">RealTime <span class="header-title">Forum</span></h2>
-        <form id="login-form">
-            <div class="form-group">
-                <input type="email" id="reg-email" placeholder="Email" required>
-            </div>
-            <div class="form-group">
-                <input type="password" id="password" placeholder="Password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-    </div>
-`;
+  // Créer un conteneur principal
+  const container = document.createElement("div");
+  container.id = "login-container";
+  container.style.display = "flex";
+  container.style.justifyContent = "center";
+  container.style.alignItems = "center";
+  container.style.height = "100vh";
+  container.style.flexDirection = "column";
 
-  modal.style.display = 'flex';
-  console.log("Modal should be visible now");
+  // Ajouter un titre
+  const title = document.createElement("h1");
+  title.innerText = "Connexion au Forum";
+  container.appendChild(title);
 
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Créer un formulaire de connexion
+  const form = document.createElement("form");
 
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('password').value;
+  // Champ email
+  const emailLabel = document.createElement("label");
+  emailLabel.innerText = "Email : ";
+  const emailInput = document.createElement("input");
+  emailInput.type = "email";
+  emailInput.placeholder = "Entrez votre email";
+  emailInput.required = true;
 
-    try {
-      const response = await fetch('http://localhost:8080/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
+  // Champ mot de passe
+  const passLabel = document.createElement("label");
+  passLabel.innerText = "Mot de passe : ";
+  const passInput = document.createElement("input");
+  passInput.type = "password";
+  passInput.placeholder = "Entrez votre mot de passe";
+  passInput.required = true;
 
-      if (response.ok) {
+  // Bouton de connexion
+  const submitButton = document.createElement("button");
+  submitButton.innerText = "Se connecter";
+  submitButton.type = "submit";
 
-        modal.remove();
-        //window.location.reload();
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Login failed');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please try again.');
-    }
+  // Bouton d'inscription
+  const registerButton = document.createElement("button");
+  registerButton.innerText = "Créer un compte";
+  registerButton.type = "button";
+  registerButton.style.marginTop = "10px";
+  registerButton.style.backgroundColor = "transparent";
+  registerButton.style.color = "#000000"; // Bleu Twitter
+  registerButton.style.border = "none";
+  registerButton.style.cursor = "pointer";
+  registerButton.style.fontWeight = "bold";
+
+  registerButton.addEventListener("click", () => {
+    register(); // Rediriger vers register()
   });
-}
+
+  // Ajout des éléments au formulaire
+  form.appendChild(emailLabel);
+  form.appendChild(emailInput);
+  form.appendChild(document.createElement("br"));
+  form.appendChild(passLabel);
+  form.appendChild(passInput);
+  form.appendChild(document.createElement("br"));
+  form.appendChild(submitButton);
+  form.appendChild(registerButton); // Ajout du bouton d'inscription
+
+  // Ajout du formulaire au conteneur
+  container.appendChild(form);
+
+  // Ajouter l'événement de connexion
+  form.addEventListener("submit", (event) => {
+    event.preventDefault(); // Empêcher le rechargement de la page
+    sendLog(emailInput.value, passInput.value);
+  });
+
+  // Ajouter tout au body
+  document.body.appendChild(container);
+};
+
+const sendLog = async (email, mdp) => {
+  try {
+    const response = await fetch("http://localhost:8080/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: email, password: mdp }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur : ${response.status} ${response.statusText}`);
+    }
+    router();
+  } catch (e) {
+    console.error("Erreur lors de la connexion :", e);
+    alert("Une erreur est survenue lors de la connexion.");
+  }
+};

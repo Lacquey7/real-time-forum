@@ -1,71 +1,16 @@
-// home.js
-import router from "../router.js";
-import template from "./template.js";
-import { showLoginForm } from "../login-page/login.js";
+import { header } from "./home-components/header.js";
+import { bodyHtml } from "./home-components/body.js";
 
-let socket = null;
+export const home = () => {
+    // Supprime tout le contenu de <body>
+    document.body.innerHTML = '';
 
-const home = {
-    render: async () => {
-        return template.render();
-    },
+    // Crée un nouveau div #app et l'ajoute à <body>
+    const app = document.createElement("div");
+    app.id = "app";
+    document.body.appendChild(app);
 
-    afterRender: async () => {
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', handleLogout);
-        }
-
-        // Établir la connexion WebSocket
-        if (!socket) {
-            socket = new WebSocket('ws://localhost:8080/ws');
-            socket.addEventListener('open', () => {
-                console.log('Connected to WebSocket');
-            });
-            socket.addEventListener('close', () => {
-                console.log('WebSocket closed');
-                showLoginForm();
-            });
-        }
-    }
+    // Ajoute le header et le contenu du forum
+    header();
+    bodyHtml();
 };
-
-async function handlePost() {
-    try {
-        const response = await fetch('http://localhost:8080/post', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log(data);
-        } else {
-            throw new Error('Failed to post');
-        }
-    } catch (error) {
-        console.error('Post error:', error);
-    }
-}
-handlePost();
-async function handleLogout() {
-    try {
-        if (socket) {
-            socket.close();
-            socket = null;
-        }
-
-        await fetch('http://localhost:8080/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
-        showLoginForm();
-    } catch (error) {
-        console.error('Logout error:', error);
-    }
-}
-
-export default home;
