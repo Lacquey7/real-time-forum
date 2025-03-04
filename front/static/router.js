@@ -5,8 +5,9 @@ import { disconnectedUser } from "./websocket-integration/user-disconnected.js";
 import { privateMessage } from "./home-page/privateMessage/privateMsg.js";
 import { majMessage } from "./home-page/messageModal/majMessage.js";
 import { refreshConversations } from "./home-page/home-components/body.js";
+import {bubbleAnim} from "./home-page/messageModal/bubbleAnim.js";
 
-let socket = null; // Déclare la variable mais ne l'initialise pas immédiatement
+export let socket = null; // Déclare la variable mais ne l'initialise pas immédiatement
 
 export const router = () => {
   // 🔌 Si un WebSocket est déjà ouvert, on le ferme avant d'en créer un nouveau
@@ -54,6 +55,12 @@ export const router = () => {
         privateMessage(data.content);
         majMessage(data.content);
       }
+
+      if (data.type === "is_typing" || data.type === "is_not_typing") {
+        console.log("c'est ici")
+        bubbleAnim(data.content, data.is_typing);
+      }
+
     } catch (error) {
       console.error(
         "❌ Erreur lors de la réception du message WebSocket :",
