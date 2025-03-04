@@ -2,71 +2,82 @@ import { login } from "./login-page/login.js";
 import { home } from "./home-page/home.js";
 import { connectedUser } from "./websocket-integration/user-connected.js";
 import { disconnectedUser } from "./websocket-integration/user-disconnected.js";
-import {privateMessage} from "./home-page/privateMessage/privateMsg.js";
-import {majMessage} from "./home-page/messageModal/majMessage.js";
+import { privateMessage } from "./home-page/privateMessage/privateMsg.js";
+import { majMessage } from "./home-page/messageModal/majMessage.js";
+import { refreshConversations } from "./home-page/home-components/body.js";
 
 let socket = null; // Déclare la variable mais ne l'initialise pas immédiatement
 
 export const router = () => {
-    // 🔌 Si un WebSocket est déjà ouvert, on le ferme avant d'en créer un nouveau
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        closeWebSocket();
-    }
+  // 🔌 Si un WebSocket est déjà ouvert, on le ferme avant d'en créer un nouveau
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    closeWebSocket();
+  }
 
-    // 📡 Création d'une nouvelle connexion WebSocket
-    socket = new WebSocket("ws://localhost:8080/ws");
+  // 📡 Création d'une nouvelle connexion WebSocket
+  socket = new WebSocket("ws://localhost:8080/ws");
 
-    socket.onopen = () => {
-        console.log("✅ WebSocket connecté !");
-        home(); // Charge la page d'accueil
-        socket.send(JSON.stringify({ type: "get_user" })); // Demande la liste des utilisateurs
-    };
+  socket.onopen = () => {
+    console.log("✅ WebSocket connecté !");
+    home(); // Charge la page d'accueil
+    socket.send(JSON.stringify({ type: "get_user" })); // Demande la liste des utilisateurs
 
-    socket.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            console.log("📩 Message WebSocket reçu :", data);
+    refreshConversations(); // Met à jour les conversations
+  };
 
-            if (data.type === "connected_users" || data.type === "new_user") {
-                if (data.content.length > 0 && data.content[0] !== "No users connected") {
-                    console.log("👥 Liste des utilisateurs connectés :", data.content);
-                    connectedUser(data.content);
-                }
-            }
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log("📩 Message WebSocket reçu :", data);
 
-            if (data.type === "user_disconnected") {
-                if (data.content.length > 0 && data.content[0] !== "No users connected") {
-                    console.log("🚪 Utilisateur déconnecté :", data.content);
-                    disconnectedUser(data.content);
-                }
-            }
-
-            if (data.type === "private") {
-                privateMessage(data.content);
-                majMessage(data.content);
-            }
-
-        } catch (error) {
-            console.error("❌ Erreur lors de la réception du message WebSocket :", error);
+      if (data.type === "connected_users" || data.type === "new_user") {
+        if (
+          data.content.length > 0 &&
+          data.content[0] !== "No users connected"
+        ) {
+          console.log("👥 Liste des utilisateurs connectés :", data.content);
+          connectedUser(data.content);
         }
-    };
+      }
 
-    socket.onerror = (error) => {
-        console.error("⚠️ Erreur WebSocket :", error);
-        login(); // Redirige vers login() en cas d'erreur
-    };
+      if (data.type === "user_disconnected") {
+        if (
+          data.content.length > 0 &&
+          data.content[0] !== "No users connected"
+        ) {
+          console.log("🚪 Utilisateur déconnecté :", data.content);
+          disconnectedUser(data.content);
+        }
+      }
 
-    socket.onclose = (event) => {
-        console.warn("🔌 WebSocket fermé :", event.reason);
-        login(); // Redirige vers login() si la connexion est fermée
-    };
+      if (data.type === "private") {
+        privateMessage(data.content);
+        majMessage(data.content);
+      }
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la réception du message WebSocket :",
+        error
+      );
+    }
+  };
+
+  socket.onerror = (error) => {
+    console.error("⚠️ Erreur WebSocket :", error);
+    login(); // Redirige vers login() en cas d'erreur
+  };
+
+  socket.onclose = (event) => {
+    console.warn("🔌 WebSocket fermé :", event.reason);
+    login(); // Redirige vers login() si la connexion est fermée
+  };
 };
 
 // 🔥 Fonction pour fermer proprement le WebSocket
 export const closeWebSocket = () => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("🛑 Fermeture du WebSocket...");
-        socket.close(1000, "Déconnexion de l'utilisateur");
-        socket = null; // Réinitialisation pour éviter d'appeler des événements sur un socket fermé
-    }
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.log("🛑 Fermeture du WebSocket...");
+    socket.close(1000, "Déconnexion de l'utilisateur");
+    socket = null; // Réinitialisation pour éviter d'appeler des événements sur un socket fermé
+  }
 };

@@ -1,20 +1,24 @@
+import { refreshConversations } from "../home-components/body.js";
+
 export const messageModal = async (user) => {
-    console.log("✅ messageModal appelée avec :", user);
+  console.log("✅ messageModal appelée avec :", user);
 
-    // Vérifier si une modal est déjà ouverte (via la classe .chat-modal)
-    const existingModal = document.querySelector(".chat-modal");
-    if (existingModal) {
-        console.log("⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle.");
-        existingModal.remove();
-    }
+  // Vérifier si une modal est déjà ouverte (via la classe .chat-modal)
+  const existingModal = document.querySelector(".chat-modal");
+  if (existingModal) {
+    console.log(
+      "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
+    );
+    existingModal.remove();
+  }
 
-    // Création du conteneur du modal
-    const modal = document.createElement("div");
-    modal.id = `chat-modal-${user}`;
-    modal.classList.add("chat-modal"); // <-- classe pour le style
+  // Création du conteneur du modal
+  const modal = document.createElement("div");
+  modal.id = `chat-modal-${user}`;
+  modal.classList.add("chat-modal"); // <-- classe pour le style
 
-    // Structure du contenu de la modal
-    modal.innerHTML = `
+  // Structure du contenu de la modal
+  modal.innerHTML = `
     <div class="chat-header">
       <span class="chat-user">${user}</span>
       <button class="chat-close">
@@ -35,139 +39,149 @@ export const messageModal = async (user) => {
     </div>
   `;
 
-    // Ajout de la modal au DOM
-    document.body.appendChild(modal);
-    console.log("✅ Nouvelle modal ajoutée :", modal);
+  // Ajout de la modal au DOM
+  document.body.appendChild(modal);
+  console.log("✅ Nouvelle modal ajoutée :", modal);
 
-    // Sélection des éléments interactifs
-    const closeButton = modal.querySelector(".chat-close");
-    const inputField = modal.querySelector("#chat-input");
-    const sendButton = modal.querySelector("#chat-send");
-    const chatBody = modal.querySelector("#chat-body");
+  // Sélection des éléments interactifs
+  const closeButton = modal.querySelector(".chat-close");
+  const inputField = modal.querySelector("#chat-input");
+  const sendButton = modal.querySelector("#chat-send");
+  const chatBody = modal.querySelector("#chat-body");
 
-    // Fermer la modal au clic sur le bouton close
-    closeButton.addEventListener("click", () => {
-        console.log("❌ Modal fermée.");
-        modal.remove();
-    });
+  // Fermer la modal au clic sur le bouton close
+  closeButton.addEventListener("click", () => {
+    console.log("❌ Modal fermée.");
+    modal.remove();
+  });
 
-    // Fonction pour formater la date
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp);
-        return date.toLocaleString("fr-FR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        }).replace(",", "");
-    };
+  // Fonction pour formater la date
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return date
+      .toLocaleString("fr-FR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+      .replace(",", "");
+  };
 
-    // 📌 Fonction pour charger les messages via GET
-    const loadMessages = async () => {
-        const url = `http://localhost:8080/message?user=${user}`;
-        console.log("📡 Requête GET envoyée à :", url);
+  // 📌 Fonction pour charger les messages via GET
+  const loadMessages = async () => {
+    const url = `http://localhost:8080/message?user=${user}`;
+    console.log("📡 Requête GET envoyée à :", url);
 
-        try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" }
-            });
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-            console.log("🔄 Réponse HTTP reçue :", response.status);
-            if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+      console.log("🔄 Réponse HTTP reçue :", response.status);
+      if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
-            const messages = await response.json();
-            console.log("✅ Messages reçus :", messages);
+      const messages = await response.json();
+      console.log("✅ Messages reçus :", messages);
 
-            // Nettoyer la zone d'affichage
-            chatBody.innerHTML = "";
+      // Nettoyer la zone d'affichage
+      chatBody.innerHTML = "";
 
-            if (!messages || messages.length === 0) {
-                chatBody.innerHTML = `<p class="chat-message received">
+      if (!messages || messages.length === 0) {
+        chatBody.innerHTML = `<p class="chat-message received">
                     Aucun message pour le moment. Soyez le premier à envoyer un message !
                 </p>`;
-                return;
-            }
+        return;
+      }
 
-            // Affichage des messages reçus
-            messages.forEach(({ sender, message, date }) => {
-                const messageElement = document.createElement("p");
-                messageElement.classList.add(
-                    "chat-message",
-                    sender === user ? "received" : "sent"
-                );
-                messageElement.innerHTML = `${message} <br><small>${formatDate(date)}</small>`;
-                chatBody.appendChild(messageElement);
-            });
+      // Affichage des messages reçus
+      messages.forEach(({ sender, message, date }) => {
+        const messageElement = document.createElement("p");
+        messageElement.classList.add(
+          "chat-message",
+          sender === user ? "received" : "sent"
+        );
+        messageElement.innerHTML = `${message} <br><small>${formatDate(
+          date
+        )}</small>`;
+        chatBody.appendChild(messageElement);
+      });
 
-            // Scroll automatique vers le dernier message
-            chatBody.scrollTop = chatBody.scrollHeight;
-        } catch (error) {
-            chatBody.innerHTML = `<p class="chat-message received">
+      // Scroll automatique vers le dernier message
+      chatBody.scrollTop = chatBody.scrollHeight;
+    } catch (error) {
+      chatBody.innerHTML = `<p class="chat-message received">
                 Erreur de chargement des messages.
             </p>`;
-            console.error("❌ Erreur lors du chargement des messages :", error);
-        }
-    };
+      console.error("❌ Erreur lors du chargement des messages :", error);
+    }
+  };
 
-    // Charger les messages à l'ouverture
-    await loadMessages();
+  // Charger les messages à l'ouverture
+  await loadMessages();
 
-    // 📌 Fonction d'envoi de message
-    const sendMessage = async () => {
-        const messageText = inputField.value.trim();
-        if (messageText === "") {
-            console.log("⚠️ Message vide, envoi annulé.");
-            return;
-        }
+  // 📌 Fonction d'envoi de message
+  const sendMessage = async () => {
+    const messageText = inputField.value.trim();
+    if (messageText === "") {
+      console.log("⚠️ Message vide, envoi annulé.");
+      return;
+    }
 
-        console.log("📩 Envoi du message :", messageText);
+    console.log("📩 Envoi du message :", messageText);
 
-        // Création de la date pour le message envoyé
-        const now = new Date();
-        const formattedTime = now.toLocaleString("fr-FR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        }).replace(",", "");
+    // Création de la date pour le message envoyé
+    const now = new Date();
+    const formattedTime = now
+      .toLocaleString("fr-FR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+      .replace(",", "");
 
-        // Ajout immédiat du message côté client
-        const messageElement = document.createElement("p");
-        messageElement.classList.add("chat-message", "sent");
-        messageElement.innerHTML = `${messageText} <br><small class="chat-time">${formattedTime}</small>`;
-        chatBody.appendChild(messageElement);
+    // Ajout immédiat du message côté client
+    const messageElement = document.createElement("p");
+    messageElement.classList.add("chat-message", "sent");
+    messageElement.innerHTML = `${messageText} <br><small class="chat-time">${formattedTime}</small>`;
+    chatBody.appendChild(messageElement);
 
-        // Vider l'input et scroller en bas
-        inputField.value = "";
-        chatBody.scrollTop = chatBody.scrollHeight;
+    // Vider l'input et scroller en bas
+    inputField.value = "";
+    chatBody.scrollTop = chatBody.scrollHeight;
 
-        // Envoyer le message au serveur
-        try {
-            const response = await fetch("http://localhost:8080/message", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ receiver: user, message: messageText })
-            });
+    // Envoyer le message au serveur
+    try {
+      const response = await fetch("http://localhost:8080/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiver: user, message: messageText }),
+      });
 
-            console.log("📡 Réponse POST reçue :", response.status);
-            if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+      console.log("📡 Réponse POST reçue :", response.status);
+      if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
-            console.log("✅ Message envoyé avec succès !");
-        } catch (error) {
-            console.error("❌ Erreur d'envoi du message :", error);
-        }
-    };
+      await refreshConversations();
 
-    // Écouteurs sur le bouton et la touche Entrée
-    sendButton.addEventListener("click", sendMessage);
-    inputField.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-    });
+      console.log(
+        "✅ Message envoyé avec succès et conversations rafraîchies !"
+      );
+    } catch (error) {
+      console.error("❌ Erreur d'envoi du message :", error);
+    }
+  };
+
+  // Écouteurs sur le bouton et la touche Entrée
+  sendButton.addEventListener("click", sendMessage);
+  inputField.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 };
 
 /**
