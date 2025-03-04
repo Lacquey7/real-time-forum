@@ -86,8 +86,11 @@ func (h *Hub) HandleConnections(db *sql.DB, w http.ResponseWriter, r *http.Reque
 		switch msg.Type {
 		case "get_user":
 			h.sendConnectedUsers(conn)
+		case "is_typing":
+			h.IsTyping(msg.Content, username, true)
+		case "is_not_typing":
+			h.IsTyping(msg.Content, username, false)
 		default:
-			// Par exemple, ajouter l'expéditeur au message et le diffuser
 			msg.Sender = conn
 			h.broadcast <- msg
 		}

@@ -13,13 +13,13 @@ func (h *Hub) sendConnectedUsers(conn *websocket.Conn) {
 	// Vérifier si l'utilisateur est encore présent
 	requesterSessionID, exists := h.clients[conn]
 	if !exists {
-		log.Println("⚠️ L'utilisateur demandant la liste des connectés n'est plus dans le Hub.")
+		log.Println("L'utilisateur demandant la liste des connectés n'est plus dans le Hub.")
 		err := conn.WriteJSON(models.UserStatus{
 			Type:    "connected_users",
 			Content: []string{"No users connected"},
 		})
 		if err != nil {
-			log.Println("❌ Erreur d'envoi du message 'No users connected':", err)
+			log.Println("Erreur d'envoi du message 'No users connected':", err)
 		}
 		return
 	}
@@ -43,6 +43,6 @@ func (h *Hub) sendConnectedUsers(conn *websocket.Conn) {
 
 	err := conn.WriteJSON(msg)
 	if err != nil {
-		log.Println("❌ Erreur d'envoi de la liste des utilisateurs:", err)
+		log.Println("Erreur d'envoi de la liste des utilisateurs:", err)
 	}
 }
