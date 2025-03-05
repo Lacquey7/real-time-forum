@@ -81,7 +81,6 @@ func (h *Hub) HandleConnections(db *sql.DB, w http.ResponseWriter, r *http.Reque
 			}
 			break
 		}
-		log.Printf("📩 Message reçu : %s\n", msg.Type)
 
 		switch msg.Type {
 		case "get_user":
