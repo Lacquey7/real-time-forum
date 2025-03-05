@@ -89,6 +89,8 @@ func (h *Hub) HandleConnections(db *sql.DB, w http.ResponseWriter, r *http.Reque
 			h.IsTyping(msg.Content, username, true)
 		case "is_not_typing":
 			h.IsTyping(msg.Content, username, false)
+		case "notify":
+			h.SendNotificationMessage(msg.Content)
 		default:
 			msg.Sender = conn
 			h.broadcast <- msg

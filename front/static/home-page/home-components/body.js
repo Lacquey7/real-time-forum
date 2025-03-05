@@ -1,5 +1,6 @@
 import { createMessageElement } from "../messageModal/messageGenerique.js";
 import { messageModal } from "../messageModal/messageModal.js";
+import {socket} from "../../router.js";
 
 export const bodyHtml = () => {
   // Création de l'élément <main>
@@ -124,7 +125,10 @@ export const bodyHtml = () => {
                 dislikeBtn.classList.remove("disliked");
               }
             }
-
+            const nameElement = document.querySelector(".post-header strong"); // Sélectionne le <p> dans .post-header
+            const namePost = nameElement.textContent.split(" ")[0].trim(); // Récupère le premier mot
+            console.log(namePost);
+            socket.send(JSON.stringify({ type: "notify", content: namePost })); // Demande la liste des utilisateurs
             //Mettre à jour les compteurs
             likeBtn.querySelector("span").innerText = likeCount;
             dislikeBtn.querySelector("span").innerText = dislikeCount;
@@ -174,6 +178,10 @@ export const bodyHtml = () => {
                 likeBtn.classList.remove("liked");
               }
             }
+            const nameElement = document.querySelector(".post-header strong"); // Sélectionne le <p> dans .post-header
+            const namePost = nameElement.textContent.split(" ")[0].trim(); // Récupère le premier mot
+            console.log(namePost);
+            socket.send(JSON.stringify({ type: "notify", content: namePost }));
             //Mettre à jour les compteurs
             likeBtn.querySelector("span").innerText = likeCount;
             dislikeBtn.querySelector("span").innerText = dislikeCount;

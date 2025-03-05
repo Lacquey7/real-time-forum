@@ -1,3 +1,5 @@
+import {router} from "../../router.js";
+
 export const postModal = async () => {
     // Vérifier si la modal existe déjà
     let modal = document.getElementById("postModal");
@@ -69,6 +71,7 @@ export const postModal = async () => {
 
                 console.log("Post ajouté avec succès !");
                 modal.style.display = "none"; // Fermer après envoi
+                router()
             } catch (error) {
                 console.error("Erreur :", error);
                 alert("Une erreur est survenue. Réessayez.");

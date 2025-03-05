@@ -1,6 +1,7 @@
 export const modalNotification = async (notifModal) => {
     try {
         const notifications = await fetchNotif();
+        console.log(notifications);
 
         if (!notifications || notifications.length === 0) {
             notifModal.innerHTML = "<p style='text-align:center;'>Aucune notification.</p>";
