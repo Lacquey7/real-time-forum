@@ -1,26 +1,34 @@
 import { createMessageElement } from "../messageModal/messageGenerique.js";
 import { messageModal } from "../messageModal/messageModal.js";
-import {socket} from "../../router.js";
+import { socket } from "../../router.js";
 
+/**
+ * Construit l'interface principale de l'application.
+ */
 export const bodyHtml = () => {
-  // Création de l'élément <main>
+  // Création de l'élément <main> principal
   const main = document.createElement("main");
   main.classList.add("main-container");
 
-  // Fonction pour créer une section sticky avec un contenu scrollable
+  /**
+   * Crée une section sticky avec un titre et un contenu scrollable.
+   * @param {string} titleText - Le titre de la section.
+   * @param {string} [id=""] - Un identifiant optionnel pour le contenu.
+   * @returns {object} - Un objet contenant la section et le contenu.
+   */
   const createStickySection = (titleText, id = "") => {
     const section = document.createElement("div");
     section.classList.add("section");
 
-    // Titre sticky
+    // Création du titre de la section
     const title = document.createElement("h3");
     title.classList.add("section-title");
     title.innerText = titleText;
 
-    // Contenu scrollable
+    // Création du conteneur scrollable
     const content = document.createElement("div");
-    content.classList.add(`section-content`);
-    content.id = `${id}`;
+    content.classList.add("section-content");
+    content.id = id;
 
     section.appendChild(title);
     section.appendChild(content);
@@ -28,26 +36,27 @@ export const bodyHtml = () => {
   };
 
   // Colonne gauche : Utilisateurs connectés
-  const { section: usersContainer } = createStickySection(
-    "Utilisateurs connectés"
-  );
+  const { section: usersContainer } = createStickySection("Utilisateurs connectés");
   usersContainer.classList.add("users-container");
 
-  // Section centrale : Posts
-  const { section: postsContainer, content: postsContent } =
-    createStickySection("Publications");
+  // Section centrale : Publications (posts)
+  const { section: postsContainer, content: postsContent } = createStickySection("Publications");
   postsContainer.classList.add("posts-container");
 
-  // Récupérer et afficher les posts
+  /**
+   * Récupère et affiche les posts.
+   */
   const fetchPosts = async () => {
     try {
       const posts = await getAllPost();
 
       posts.forEach((post) => {
+        // Création d'un conteneur pour le post avec un identifiant unique
         const postElement = document.createElement("div");
         postElement.classList.add("post");
+        postElement.setAttribute("data-post-id", post.id);
 
-        // Titre du post (Auteur + Catégorie et date)
+        // En-tête du post : affiche l'auteur, la catégorie et la date
         const postHeader = document.createElement("div");
         postHeader.classList.add("post-header");
 
@@ -61,7 +70,7 @@ export const bodyHtml = () => {
         postHeader.appendChild(postAuthor);
         postHeader.appendChild(postDate);
 
-        // Contenu du post
+        // Contenu principal du post
         const postContent = document.createElement("p");
         postContent.innerText = post.content;
         postContent.classList.add("post-content");
@@ -70,6 +79,7 @@ export const bodyHtml = () => {
         const postInteractions = document.createElement("div");
         postInteractions.classList.add("post-interactions");
 
+        // Bouton Like
         const likeBtn = document.createElement("button");
         likeBtn.classList.add("post-button", "like");
         if (post.liked) {
@@ -77,6 +87,7 @@ export const bodyHtml = () => {
         }
         likeBtn.innerHTML = svgLike + `<span>${post.likes}</span>`;
 
+        // Bouton Dislike
         const dislikeBtn = document.createElement("button");
         dislikeBtn.classList.add("post-button", "dislike");
         if (post.disliked) {
@@ -84,16 +95,16 @@ export const bodyHtml = () => {
         }
         dislikeBtn.innerHTML = svgDislike + `<span>${post.dislikes}</span>`;
 
+        // Gestion du clic sur le bouton Like
         likeBtn.addEventListener("click", async () => {
           try {
             const isLiked = likeBtn.classList.contains("liked");
             const isDisliked = dislikeBtn.classList.contains("disliked");
 
+            // Envoi de l'événement like au serveur
             await fetch("http://localhost:8080/event", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 type: "post",
                 content_type: "like",
@@ -101,35 +112,33 @@ export const bodyHtml = () => {
               }),
             });
 
-            let likeCount = parseInt(
-              likeBtn.querySelector("span").innerText,
-              10
-            );
-            let dislikeCount = parseInt(
-              dislikeBtn.querySelector("span").innerText,
-              10
-            );
+            let likeCount = parseInt(likeBtn.querySelector("span").innerText, 10);
+            let dislikeCount = parseInt(dislikeBtn.querySelector("span").innerText, 10);
 
             if (isLiked) {
-              //Si déjà liké → annuler le like
+              // Annule le like si déjà liké
               likeCount -= 1;
               likeBtn.classList.remove("liked");
             } else {
-              //Ajouter un like
+              // Ajoute un like
               likeCount += 1;
               likeBtn.classList.add("liked");
-
               if (isDisliked) {
-                //Si déjà disliké → annuler le dislike
+                // Annule le dislike s'il existe
                 dislikeCount -= 1;
                 dislikeBtn.classList.remove("disliked");
               }
             }
-            const nameElement = document.querySelector(".post-header strong"); // Sélectionne le <p> dans .post-header
-            const namePost = nameElement.textContent.split(" ")[0].trim(); // Récupère le premier mot
-            console.log(namePost);
-            socket.send(JSON.stringify({ type: "notify", content: namePost })); // Demande la liste des utilisateurs
-            //Mettre à jour les compteurs
+
+            // Sélectionne le nom de l'auteur du post courant et envoie une notification
+            const nameElement = postHeader.querySelector("strong");
+            if (nameElement) {
+              const namePost = nameElement.textContent.split(" ")[0].trim();
+              console.log("Notification Like:", namePost);
+              socket.send(JSON.stringify({ type: "notify", content: namePost, action: "like" }));
+            }
+
+            // Mise à jour des compteurs affichés
             likeBtn.querySelector("span").innerText = likeCount;
             dislikeBtn.querySelector("span").innerText = dislikeCount;
           } catch (e) {
@@ -137,16 +146,16 @@ export const bodyHtml = () => {
           }
         });
 
+        // Gestion du clic sur le bouton Dislike
         dislikeBtn.addEventListener("click", async () => {
           try {
             const isLiked = likeBtn.classList.contains("liked");
             const isDisliked = dislikeBtn.classList.contains("disliked");
 
+            // Envoi de l'événement dislike au serveur
             await fetch("http://localhost:8080/event", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 type: "post",
                 content_type: "dislike",
@@ -154,35 +163,33 @@ export const bodyHtml = () => {
               }),
             });
 
-            let likeCount = parseInt(
-              likeBtn.querySelector("span").innerText,
-              10
-            );
-            let dislikeCount = parseInt(
-              dislikeBtn.querySelector("span").innerText,
-              10
-            );
+            let likeCount = parseInt(likeBtn.querySelector("span").innerText, 10);
+            let dislikeCount = parseInt(dislikeBtn.querySelector("span").innerText, 10);
 
             if (isDisliked) {
-              // Si déjà disliké → annuler le dislike
+              // Annule le dislike si déjà disliké
               dislikeCount -= 1;
               dislikeBtn.classList.remove("disliked");
             } else {
-              //Ajouter un dislike
+              // Ajoute un dislike
               dislikeCount += 1;
               dislikeBtn.classList.add("disliked");
-
               if (isLiked) {
-                //Si déjà liké → annuler le like
+                // Annule le like s'il existe
                 likeCount -= 1;
                 likeBtn.classList.remove("liked");
               }
             }
-            const nameElement = document.querySelector(".post-header strong"); // Sélectionne le <p> dans .post-header
-            const namePost = nameElement.textContent.split(" ")[0].trim(); // Récupère le premier mot
-            console.log(namePost);
-            socket.send(JSON.stringify({ type: "notify", content: namePost }));
-            //Mettre à jour les compteurs
+
+            // Sélectionne le nom de l'auteur du post courant et envoie une notification
+            const nameElement = postHeader.querySelector("strong");
+            if (nameElement) {
+              const namePost = nameElement.textContent.split(" ")[0].trim();
+              console.log("Notification Dislike:", namePost);
+              socket.send(JSON.stringify({ type: "notify", content: namePost, action: "dislike" }));
+            }
+
+            // Mise à jour des compteurs affichés
             likeBtn.querySelector("span").innerText = likeCount;
             dislikeBtn.querySelector("span").innerText = dislikeCount;
           } catch (e) {
@@ -193,51 +200,49 @@ export const bodyHtml = () => {
         postInteractions.appendChild(likeBtn);
         postInteractions.appendChild(dislikeBtn);
 
-        // Section des commentaires avec l'icône correspondante
+        // Section des commentaires
         const commentsSection = document.createElement("div");
         commentsSection.classList.add("comment-section");
 
-        // Titre "Commentaires (X)"
+        // Titre pour afficher/masquer les commentaires
         const commentTitle = document.createElement("strong");
         commentTitle.classList.add("comment-title");
         commentTitle.innerHTML = svgComment + ` Commentaires`;
         commentTitle.style.cursor = "pointer";
-        commentTitle.style.color = "#000000"; // Bleu Twitter
+        commentTitle.style.color = "#000000";
 
         // Conteneur pour afficher les commentaires
         const commentsContainer = document.createElement("div");
         commentsContainer.classList.add("comments-container");
-        commentsContainer.style.display = "none"; // Masqué au début
+        commentsContainer.style.display = "none";
 
-        // Formulaire d'ajout de commentaire
+        // Formulaire pour ajouter un commentaire
         const commentForm = document.createElement("form");
         commentForm.classList.add("comment-form");
-        commentForm.style.display = "none"; // Masqué tant que l'utilisateur n'a pas ouvert les commentaires
+        commentForm.style.display = "none";
 
-        // Champ pour saisir le contenu du commentaire
         const commentInput = document.createElement("input");
         commentInput.type = "text";
         commentInput.placeholder = "Écrire un commentaire...";
         commentInput.required = true;
 
-        // Bouton d'envoi
         const commentSubmitBtn = document.createElement("button");
         commentSubmitBtn.type = "submit";
         commentSubmitBtn.innerText = "Envoyer";
 
-        // Ajout des éléments au formulaire
         commentForm.appendChild(commentInput);
         commentForm.appendChild(commentSubmitBtn);
 
-        // Événement de soumission du formulaire
+        // Gestion de la soumission du commentaire
         commentForm.addEventListener("submit", async (e) => {
           e.preventDefault();
           const content = commentInput.value.trim();
           if (!content) return;
-          // Envoyer le commentaire au serveur
+
+          // Envoie du commentaire au serveur
           await sendComment(post.id, content);
 
-          // Recharger les commentaires depuis l'API
+          // Rechargement des commentaires pour ce post
           commentsContainer.innerHTML = "";
           const newComments = await fetchComments(post.id);
           if (newComments.length > 0) {
@@ -249,13 +254,20 @@ export const bodyHtml = () => {
             commentsContainer.innerText = "Aucun commentaire.";
           }
 
-          // Vider le champ texte
+          // Envoi d'une notification pour le commentaire
+          const nameElement = postHeader.querySelector("strong");
+          if (nameElement) {
+            const namePost = nameElement.textContent.split(" ")[0].trim();
+            console.log("Notification Comment:", namePost);
+            socket.send(JSON.stringify({ type: "notify", content: namePost, action: "comment" }));
+          }
+
+          // Vider le champ de saisie
           commentInput.value = "";
         });
 
-        // Ajouter un événement "click" sur le titre pour afficher/masquer les commentaires
+        // Permet d'afficher ou masquer les commentaires lors du clic sur le titre
         commentTitle.addEventListener("click", async () => {
-          // Si le conteneur est vide, on va chercher les commentaires
           if (commentsContainer.childNodes.length === 0) {
             const comments = await fetchComments(post.id);
             if (comments.length > 0) {
@@ -267,27 +279,21 @@ export const bodyHtml = () => {
               commentsContainer.innerText = "Aucun commentaire.";
             }
           }
-
-          // Toggle l'affichage
           const currentDisplay = commentsContainer.style.display;
-          commentsContainer.style.display =
-            currentDisplay === "none" ? "block" : "none";
-
-          // Le formulaire est masqué ou affiché au même rythme que le conteneur
+          commentsContainer.style.display = currentDisplay === "none" ? "block" : "none";
           commentForm.style.display = commentsContainer.style.display;
         });
 
-        // Assemblage de la section commentaires
+        // Assemblage final de la section commentaires
         commentsSection.appendChild(commentTitle);
         commentsSection.appendChild(commentForm);
         commentsSection.appendChild(commentsContainer);
 
-        // Assemblage du post
+        // Assemblage final du post
         postElement.appendChild(postHeader);
         postElement.appendChild(postContent);
         postElement.appendChild(postInteractions);
         postElement.appendChild(commentsSection);
-
         postsContent.appendChild(postElement);
       });
     } catch (error) {
@@ -298,8 +304,7 @@ export const bodyHtml = () => {
   fetchPosts();
 
   // Colonne droite : Messages envoyés
-  const { section: messagesContainer, content: messagesContent } =
-    createStickySection("Messages", "messages-id");
+  const { section: messagesContainer } = createStickySection("Messages", "messages-id");
   messagesContainer.classList.add("messages-container");
 
   // Appliquer les styles pour les conversations
@@ -340,195 +345,103 @@ export const bodyHtml = () => {
           color: #b0b3b8;
           align-self: flex-end;
       }
-          .empty-conversations, .error-message {
-    padding: 20px;
-    text-align: center;
-    color: #b0b3b8;
-    background: #000000FF;
-    border-radius: 10px;
-    margin: 10px;
-}
+      .empty-conversations, .error-message {
+          padding: 20px;
+          text-align: center;
+          color: #b0b3b8;
+          background: #000000FF;
+          border-radius: 10px;
+          margin: 10px;
+      }
 
-.empty-conversations p {
-    margin: 5px 0;
-}
+      .empty-conversations p {
+          margin: 5px 0;
+      }
 
-.error-message {
-    color: #ff6b6b;
-}
+      .error-message {
+          color: #ff6b6b;
+      }
     `;
     document.head.appendChild(style);
   };
 
-  // Initialiser les styles et charger les messages
   initMessageStyles();
+  // Appel de refreshConversations pour charger les conversations (cette fonction est désormais exportée)
   refreshConversations();
 
-  // Assemblage des colonnes
+  // Assemblage final des colonnes et ajout dans le conteneur #app
   main.appendChild(usersContainer);
   main.appendChild(postsContainer);
   main.appendChild(messagesContainer);
-
-  const divApp = document.querySelector("#app");
-  divApp.appendChild(main);
+  document.querySelector("#app").appendChild(main);
 };
 
-// Fonction pour obtenir les messages depuis l'API
-export const messages = async () => {
-  try {
-    const response = await fetch("http://localhost:8080/conversation");
-
-    if (!response.ok) {
-      throw new Error(
-        `Erreur HTTP: ${response.status} - ${response.statusText}`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(
-      "Erreur lors du chargement des conversations:",
-      error.message
-    );
-    return []; // Retourne un tableau vide en cas d'erreur pour éviter les crashs
-  }
-};
-
-// Fonction pour rafraîchir et trier toutes les conversations
-export const refreshConversations = async () => {
-  const sectionContent = document.querySelector("#messages-id");
-  if (!sectionContent) return;
-
-  try {
-    // Récupérer toutes les conversations
-    const conversations = await messages();
-
-    // Vider le conteneur
-    sectionContent.innerHTML = "";
-
-    // Si pas de conversations, afficher un message d'attente et quitter
-    if (
-      !conversations ||
-      !Array.isArray(conversations) ||
-      conversations.length === 0
-    ) {
-      const emptyMessage = document.createElement("div");
-      emptyMessage.classList.add("empty-conversations");
-      emptyMessage.innerHTML = `
-          <p>Aucune conversation pour le moment.</p>
-          <p>Cliquez sur un utilisateur connecté pour démarrer une discussion.</p>
-        `;
-      sectionContent.appendChild(emptyMessage);
-      return;
-    }
-
-    // Extraire les dates des derniers messages pour chaque conversation
-    const conversationsWithDates = conversations.map((conv) => {
-      return {
-        ...conv,
-        timestamp: new Date(conv.last_message_date).getTime(),
-      };
-    });
-
-    // Trier par timestamp décroissant (plus récent en premier)
-    conversationsWithDates.sort((a, b) => b.timestamp - a.timestamp);
-
-    // Recréer les éléments dans le bon ordre
-    conversationsWithDates.forEach((conv) => {
-      const msgElement = createMessageElement(conv, messageModal);
-      sectionContent.appendChild(msgElement);
-    });
-
-    console.log("📊 Conversations triées par date du dernier message");
-  } catch (error) {
-    console.error("❌ Erreur lors du tri des conversations:", error);
-
-    // En cas d'erreur, afficher un message
-    sectionContent.innerHTML = `
-        <div class="error-message">
-          <p>Impossible de charger les conversations.</p>
-        </div>
-      `;
-  }
-};
-
-// Récupère tous les posts depuis l'API
+/**
+ * Récupère l'ensemble des posts depuis l'API.
+ * @returns {Promise<Array>} - Liste des posts.
+ */
 const getAllPost = async () => {
   try {
     const response = await fetch("http://localhost:8080/post", {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
     return await response.json();
   } catch (e) {
     throw new Error(`Erreur lors de la récupération des posts: ${e.message}`);
   }
 };
 
-// Récupère les commentaires d'un post
+/**
+ * Récupère les commentaires d'un post donné.
+ * @param {number|string} postId - L'identifiant du post.
+ * @returns {Promise<Array>} - Liste des commentaires.
+ */
 const fetchComments = async (postId) => {
   try {
     const response = await fetch(`http://localhost:8080/comment/${postId}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    let comments = await response.json(); // ✅ Récupérer les commentaires
-
-    // ✅ Trier les commentaires par date du plus récent au plus ancien
+    if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+    let comments = await response.json();
+    // Trier les commentaires du plus récent au plus ancien
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    return comments; // Retourne les commentaires triés
+    return comments;
   } catch (e) {
-    console.error(
-      `Erreur lors de la récupération des commentaires: ${e.message}`
-    );
-    return []; // Retourne un tableau vide en cas d'erreur
+    console.error(`Erreur lors de la récupération des commentaires: ${e.message}`);
+    return [];
   }
 };
 
-// Envoie un nouveau commentaire pour un post donné
+/**
+ * Envoie un nouveau commentaire pour un post donné.
+ * @param {number|string} postId - L'identifiant du post.
+ * @param {string} content - Le contenu du commentaire.
+ */
 const sendComment = async (postId, content) => {
   try {
     const response = await fetch("http://localhost:8080/comment", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id_post: postId,
-        content: content,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_post: postId, content }),
     });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-    // Pas besoin de renvoyer la data, on re-fetch après
+    if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
   } catch (e) {
     console.error(`Erreur lors de l'envoi du commentaire: ${e.message}`);
   }
 };
 
-// Crée un élément DOM pour un commentaire (affiche toutes les infos)
+/**
+ * Crée un élément DOM pour un commentaire.
+ * @param {object} comment - L'objet commentaire.
+ * @returns {HTMLElement} - L'élément DOM représentant le commentaire.
+ */
 const makeCommentElement = (comment) => {
   const commentWrapper = document.createElement("div");
   commentWrapper.classList.add("comment");
 
-  //Création de l'en-tête du commentaire (Utilisateur + Date)
   const commentHeader = document.createElement("div");
   commentHeader.classList.add("comment-header");
 
@@ -543,16 +456,13 @@ const makeCommentElement = (comment) => {
   commentHeader.appendChild(userInfo);
   commentHeader.appendChild(commentDate);
 
-  // Contenu du commentaire
   const contentInfo = document.createElement("p");
   contentInfo.classList.add("comment-content");
   contentInfo.innerText = comment.content;
 
-  //Boutons d'interactions (Like/Dislike)
   const commentActions = document.createElement("div");
   commentActions.classList.add("comment-actions");
 
-  // Assemblage final du commentaire
   commentWrapper.appendChild(commentHeader);
   commentWrapper.appendChild(contentInfo);
   commentWrapper.appendChild(commentActions);
@@ -561,25 +471,77 @@ const makeCommentElement = (comment) => {
 };
 
 // Définition des SVG pour les icônes
-const svgLike = `<svg class="icon" xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24" width="16" height="16">
-      <path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32
-      c0-.41-.17-.79-.44-1.06L14.17 2 7.59 8.59C7.22 8.95 7 9.45 7 10v9
-      c0 1.1.9 2 2 2h9c.78 0 1.45-.45 1.75-1.11l3.58-7.16
-      c.08-.14.12-.3.12-.44v-2z"/>
-    </svg>`;
+const svgLike = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+  <path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 2 7.59 8.59C7.22 8.95 7 9.45 7 10v9c0 1.1.9 2 2 2h9c.78 0 1.45-.45 1.75-1.11l3.58-7.16c.08-.14.12-.3.12-.44v-2z"/>
+</svg>`;
 
-const svgDislike = `<svg class="icon" xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24" width="16" height="16">
-      <path d="M23 3h-4v12h4V3zM1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32
-      c0 .41.17.79.44 1.06L9.83 22l6.58-6.59C16.78 14.05 17 13.55
-      17 13V4c0-1.1-.9-2-2-2H3c-.78 0-1.45.45-1.75 1.11L.67 8.27
-      c-.08.14-.12.3-.12.44v2z"/>
-    </svg>`;
+const svgDislike = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+  <path d="M23 3h-4v12h4V3zM1 14c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17-.79.44 1.06L9.83 22l6.58-6.59C16.78 14.05 17 13.55 17 13V4c0-1.1-.9-2-2-2H3c-.78 0-1.45.45-1.75 1.11L.67 8.27c-.08.14-.12.3-.12.44v2z"/>
+</svg>`;
 
-const svgComment = `<svg class="icon" xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24" width="16" height="16">
-      <path d="M21 6h-2v9H5v2c0 .55.45 1 1 1h11l4 4V7
-      c0-.55-.45-1-1-1zM17 2H3c-.55 0-1 .45-1 1v14l4-4h11
-      c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1z"/>
-    </svg>`;
+const svgComment = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+  <path d="M21 6h-2v9H5v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zM17 2H3c-.55 0-1 .45-1 1v14l4-4h11c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1z"/>
+</svg>`;
+
+/**
+ * Récupère les conversations et met à jour la section Messages.
+ * Cette fonction est exportée pour pouvoir être utilisée par d'autres modules.
+ */
+export const refreshConversations = async () => {
+  const sectionContent = document.querySelector("#messages-id");
+  if (!sectionContent) return;
+
+  try {
+    // Récupération de toutes les conversations via la fonction messages (définie ailleurs ou à ajouter)
+    const conversations = await messages();
+    sectionContent.innerHTML = "";
+
+    if (!conversations || !Array.isArray(conversations) || conversations.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.classList.add("empty-conversations");
+      emptyMessage.innerHTML = `
+          <p>Aucune conversation pour le moment.</p>
+          <p>Cliquez sur un utilisateur connecté pour démarrer une discussion.</p>
+      `;
+      sectionContent.appendChild(emptyMessage);
+      return;
+    }
+
+    // Tri des conversations par date du dernier message (du plus récent au plus ancien)
+    const conversationsWithDates = conversations.map((conv) => ({
+      ...conv,
+      timestamp: new Date(conv.last_message_date).getTime(),
+    }));
+    conversationsWithDates.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Création et ajout des éléments pour chaque conversation
+    conversationsWithDates.forEach((conv) => {
+      const msgElement = createMessageElement(conv, messageModal);
+      sectionContent.appendChild(msgElement);
+    });
+
+    console.log("📊 Conversations triées par date du dernier message");
+  } catch (error) {
+    console.error("❌ Erreur lors du tri des conversations:", error);
+    sectionContent.innerHTML = `
+        <div class="error-message">
+          <p>Impossible de charger les conversations.</p>
+        </div>
+      `;
+  }
+};
+
+/**
+ * Exemple de fonction pour récupérer les conversations depuis l'API.
+ * Si vous avez déjà une fonction 'messages' ailleurs, assurez-vous qu'elle est importée ou définie ici.
+ */
+export const messages = async () => {
+  try {
+    const response = await fetch("http://localhost:8080/conversation");
+    if (!response.ok) throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Erreur lors du chargement des conversations:", error.message);
+    return []; // Retourne un tableau vide en cas d'erreur pour éviter un crash
+  }
+};
