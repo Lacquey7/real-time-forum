@@ -1,4 +1,5 @@
 import { refreshConversations } from "../home-components/body.js";
+import {socket} from "../../router.js";
 
 export const messageModal = async (user) => {
   console.log("✅ messageModal appelée avec :", user);
@@ -168,6 +169,9 @@ export const messageModal = async (user) => {
       if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
       await refreshConversations();
+      const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+      socket.send(messageTrailing);
+      isTypingSent = false;
 
       console.log(
         "✅ Message envoyé avec succès et conversations rafraîchies !"
@@ -177,10 +181,49 @@ export const messageModal = async (user) => {
     }
   };
 
-  // Écouteurs sur le bouton et la touche Entrée
-  sendButton.addEventListener("click", sendMessage);
+  let isTypingSent = false;
+
+  function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
+  function sendMessageLeading() {
+    if (!isTypingSent) {
+      const messageLeading = JSON.stringify({ type: "is_typing", content: user });
+      socket.send(messageLeading);
+      isTypingSent = true;
+    }
+  }
+
+// Envoie du message "typing_end" après une pause d'inactivité
+  const sendMessageTrailing = debounce(() => {
+    const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+    socket.send(messageTrailing);
+    isTypingSent = false;
+  }, 1000);
+
+// Gestion de l'input avec "change"
+  inputField.addEventListener("input", () => {
+    sendMessageLeading();  // Envoi immédiat
+    sendMessageTrailing(); // Envoi après 2s d'inactivité
+  });
+
+
+  sendButton.addEventListener("click", sendMessage
+
+  );
   inputField.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
+    if (e.key === "Enter") {
+      sendMessage()
+      const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+      socket.send(messageTrailing);
+      isTypingSent = false;
+    }
   });
 };
 
@@ -336,3 +379,6 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 console.log("✅ Styles appliqués.");
+
+
+
