@@ -13,8 +13,8 @@ import (
 )
 
 type LoginCheck struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Identifier string `json:"email"` // Peut être un email ou un username
+	Password   string `json:"password"`
 }
 
 // Login prend `db` en paramètre
@@ -37,9 +37,9 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 	defer r.Body.Close()
 
-	success, userID := checkDataLogin(db, user.Email, user.Password)
+	success, userID := checkDataLogin(db, user.Identifier, user.Password)
 	if !success {
-		utils.SendErrorResponse(w, http.StatusUnauthorized, "L'email ou le mot de passe est incorrect")
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "L'identifiant ou le mot de passe est incorrect")
 		return
 	}
 
@@ -58,7 +58,7 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		HttpOnly: true,  // Empêche l'accès via JavaScript (protection XSS)
 		Secure:   false, // Mettre true en production (HTTPS obligatoire)
 		SameSite: http.SameSiteStrictMode,
-		Path:     "http://127.0.0.1:5500/",
+		Path:     "/",
 	})
 
 	// Réponse JSON au client
@@ -71,29 +71,32 @@ func Login(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func checkDataLogin(db *sql.DB, email, password string) (bool, string) {
-	// Vérification de l'email valide
-	if !utils.IsvalidEmail(email) {
-		fmt.Println("Email invalide")
-		return false, ""
+// checkDataLogin vérifie l'email ou le nom d'utilisateur
+func checkDataLogin(db *sql.DB, identifier, password string) (bool, string) {
+	var userID, hashedPassword string
+	var query string
+
+	// Vérifier si l'input est un email ou un username
+	if utils.IsvalidEmail(identifier) {
+		query = `SELECT id, password FROM user WHERE email = ?`
+	} else {
+		query = `SELECT id, password FROM user WHERE username = ?`
 	}
 
-	var userID, hashedPassword string
-	query := `SELECT id, password FROM user WHERE email = ?`
-	err := db.QueryRow(query, email).Scan(&userID, &hashedPassword)
+	err := db.QueryRow(query, identifier).Scan(&userID, &hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Println("Aucun utilisateur trouvé avec cet email :", email)
-		} else {
-			log.Println("Erreur lors de la récupération des informations de l'utilisateur :", err)
+			log.Println("Aucun utilisateur trouvé avec cet identifiant :", identifier)
+			return false, "Aucun utilisateur trouvé"
 		}
-		return false, ""
+		log.Println("Erreur lors de la récupération des informations de l'utilisateur :", err)
+		return false, "Erreur interne"
 	}
 
 	// Vérification du mot de passe
 	if err := utils.CheckPassword(password, hashedPassword); err != nil {
 		fmt.Println("Mot de passe incorrect")
-		return false, ""
+		return false, "Mot de passe incorrect"
 	}
 
 	// Retourne true et l'ID de l'utilisateur si tout est correct
