@@ -26,8 +26,7 @@ export const login = () => {
   const emailLabel = document.createElement("label");
   emailLabel.innerText = "Email : ";
   const emailInput = document.createElement("input");
-  emailInput.type = "email";
-  emailInput.placeholder = "Entrez votre email";
+  emailInput.placeholder = "Entrez votre email ou username";
   emailInput.required = true;
 
   // Champ mot de passe
