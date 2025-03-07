@@ -11,7 +11,6 @@ export const connectedUser = (data) => {
     data.forEach((user) => {
         // Vérifier si l'utilisateur est déjà affiché
         const existingUser = document.getElementById(`user-${user}`);
-
         if (!existingUser) {
             // Création du conteneur de l'utilisateur
             const userContainer = document.createElement("div");
@@ -35,10 +34,31 @@ export const connectedUser = (data) => {
             // Ajout des éléments au conteneur
             userContainer.appendChild(statusIndicator);
             userContainer.appendChild(userElement);
-            usersContent.appendChild(userContainer);
+
+            // Insertion dans l'ordre alphabétique
+            insertSorted(usersContent, userContainer);
         }
     });
 };
+
+// Fonction pour insérer un élément dans le parent de façon triée
+function insertSorted(parent, newElement) {
+    const newUserName = newElement.querySelector('.user-name').textContent.toLowerCase();
+    const children = Array.from(parent.getElementsByClassName('user-container'));
+
+    let inserted = false;
+    for (let child of children) {
+        const childUserName = child.querySelector('.user-name').textContent.toLowerCase();
+        if (newUserName < childUserName) {
+            parent.insertBefore(newElement, child);
+            inserted = true;
+            break;
+        }
+    }
+    if (!inserted) {
+        parent.appendChild(newElement);
+    }
+}
 
 // Ajout du style CSS dynamique
 const style = document.createElement("style");
