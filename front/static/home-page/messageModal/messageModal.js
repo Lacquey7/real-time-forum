@@ -1,5 +1,5 @@
 import { refreshConversations } from "../home-components/body.js";
-import {socket} from "../../router.js";
+import { socket } from "../../router.js";
 
 export const messageModal = async (user) => {
   console.log("✅ messageModal appelée avec :", user);
@@ -8,7 +8,7 @@ export const messageModal = async (user) => {
   const existingModal = document.querySelector(".chat-modal");
   if (existingModal) {
     console.log(
-      "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
+        "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
     );
     existingModal.remove();
   }
@@ -60,21 +60,47 @@ export const messageModal = async (user) => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     return date
-      .toLocaleString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-      .replace(",", "");
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
   };
 
-  // 📌 Fonction pour charger les messages via GET
-  const loadMessages = async () => {
+  // Stockage de tous les messages récupérés du serveur
+  let allMessages = [];
+  const MESSAGES_PER_LOAD = 10; // Nombre de messages à charger à la fois
+  let currentOffset = 0; // Pour suivre le nombre de messages déjà chargés
+
+  // Fonction de throttle pour limiter les appels lors du défilement
+  function throttle(func, delay) {
+    let lastCall = 0;
+    return function(...args) {
+      const now = new Date().getTime();
+      if (now - lastCall >= delay) {
+        func.apply(this, args);
+        lastCall = now;
+      }
+    };
+  }
+
+  // Fonction pour charger les messages via GET
+  const loadMessages = async (user) => {
+    const chatBody = document.querySelector(`#chat-modal-${user} .chat-body`);
+    if (!chatBody) return;
+
+    // Si nous avons déjà les messages, pas besoin de refaire l'appel API
+    if (allMessages.length > 0) {
+      displayBatchOfMessages(user, currentOffset);
+      return;
+    }
+
     const url = `http://localhost:8080/message?user=${user}`;
-    console.log("📡 Requête GET envoyée à :", url);
+    console.log("📡 Requête GET pour récupérer tous les messages de l'utilisateur :", user);
 
     try {
       const response = await fetch(url, {
@@ -82,47 +108,162 @@ export const messageModal = async (user) => {
         headers: { "Content-Type": "application/json" },
       });
 
-      console.log("🔄 Réponse HTTP reçue :", response.status);
       if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
-      const messages = await response.json();
-      console.log("✅ Messages reçus :", messages);
+      // Stockage de tous les messages
+      allMessages = await response.json();
+      console.log("✅ Nombre total de messages reçus :", allMessages.length);
 
       // Nettoyer la zone d'affichage
       chatBody.innerHTML = "";
 
-      if (!messages || messages.length === 0) {
+      if (!allMessages || allMessages.length === 0) {
         chatBody.innerHTML = `<p class="chat-message received">
-                    Aucun message pour le moment. Soyez le premier à envoyer un message !
-                </p>`;
+          Aucun message pour le moment. Soyez le premier à envoyer un message !
+        </p>`;
         return;
       }
 
-      // Affichage des messages reçus
-      messages.forEach(({ sender, message, date }) => {
-        const messageElement = document.createElement("p");
-        messageElement.classList.add(
-          "chat-message",
-          sender === user ? "received" : "sent"
-        );
-        messageElement.innerHTML = `${message} <br><small>${formatDate(
-          date
-        )}</small>`;
-        chatBody.appendChild(messageElement);
-      });
+      // Trions les messages du plus récent au plus ancien
+      allMessages.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      // Scroll automatique vers le dernier message
-      chatBody.scrollTop = chatBody.scrollHeight;
+      // Affichage des premiers messages (les plus récents)
+      displayBatchOfMessages(user, 0);
+
     } catch (error) {
       chatBody.innerHTML = `<p class="chat-message received">
-                Erreur de chargement des messages.
-            </p>`;
+        Erreur de chargement des messages.
+      </p>`;
       console.error("❌ Erreur lors du chargement des messages :", error);
+    }
+
+    return Promise.resolve();
+  };
+
+  // Fonction pour afficher un lot de messages
+  const displayBatchOfMessages = (user, offset) => {
+    const chatBody = document.querySelector(`#chat-modal-${user} .chat-body`);
+    if (!chatBody) return;
+
+    // Si c'est le premier chargement (offset = 0), on vide le contenu
+    if (offset === 0) {
+      chatBody.innerHTML = "";
+    }
+
+    // Calcul de l'index de début et de fin pour ce lot
+    const startIndex = offset;
+    const endIndex = Math.min(startIndex + MESSAGES_PER_LOAD, allMessages.length);
+
+    // Si on a déjà affiché tous les messages, on arrête
+    if (startIndex >= allMessages.length) {
+      // Ajouter un marqueur de fin
+      if (!chatBody.querySelector(".chat-end-marker")) {
+        const endMarker = document.createElement("div");
+        endMarker.classList.add("chat-end-marker");
+        endMarker.textContent = "Début de la conversation";
+        chatBody.insertBefore(endMarker, chatBody.firstChild);
+      }
+      return;
+    }
+
+    // Sauvegarde la position actuelle de défilement avant d'ajouter les nouveaux messages
+    const scrollPosition = chatBody.scrollTop;
+    const oldHeight = chatBody.scrollHeight;
+
+    // Créer un fragment pour améliorer les performances
+    const fragment = document.createDocumentFragment();
+
+    // Récupération du lot de messages à afficher
+    const messagesToDisplay = allMessages.slice(startIndex, endIndex);
+
+    // Affichage des messages
+    messagesToDisplay.forEach(({ sender, message, date }) => {
+      const messageElement = document.createElement("p");
+      messageElement.classList.add(
+          "chat-message",
+          sender === user ? "received" : "sent"
+      );
+      messageElement.innerHTML = `${message} <br><small>${formatDate(date)}</small>`;
+      fragment.appendChild(messageElement);
+    });
+
+    // Ajout des messages au début du chatBody (car on affiche du plus récent au plus ancien)
+    const firstChild = chatBody.firstChild;
+    if (firstChild) {
+      chatBody.insertBefore(fragment, firstChild);
+    } else {
+      chatBody.appendChild(fragment);
+    }
+
+    // Si ce n'est pas le premier chargement (offset > 0), on maintient la position
+    if (offset > 0) {
+      // Restaure la position de défilement après avoir ajouté les nouveaux messages
+      chatBody.scrollTop = scrollPosition + (chatBody.scrollHeight - oldHeight);
+    } else {
+      // Scroll automatique vers le dernier message pour le premier chargement
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // Mise à jour de l'offset pour le prochain chargement
+    currentOffset = endIndex;
+
+    // Si on a affiché tous les messages, ajouter un marqueur de fin
+    if (endIndex >= allMessages.length && !chatBody.querySelector(".chat-end-marker")) {
+      const endMarker = document.createElement("div");
+      endMarker.classList.add("chat-end-marker");
+      endMarker.textContent = "Début de la conversation";
+      chatBody.insertBefore(endMarker, chatBody.firstChild);
     }
   };
 
+  // Fonction pour configurer le défilement infini
+  const setupInfiniteScroll = (user) => {
+    const chatBody = document.querySelector(`#chat-modal-${user} .chat-body`);
+    if (!chatBody) return;
+
+    const handleScroll = throttle(() => {
+      // Si l'utilisateur est proche du haut du chat (remonte l'historique)
+      if (chatBody.scrollTop < 50) {
+        // Si on a déjà un chargement en cours, on ignore
+        if (chatBody.dataset.isLoading === "true") return;
+
+        // Si on a déjà un marqueur de fin, on n'en fait pas plus
+        if (chatBody.querySelector(".chat-end-marker")) return;
+
+        // Marquer comme en cours de chargement
+        chatBody.dataset.isLoading = "true";
+
+        console.log("📜 Chargement de plus de messages à l'offset:", currentOffset);
+
+        // Charger le prochain lot de messages
+        displayBatchOfMessages(user, currentOffset);
+
+        // Après un court délai, permettre de recharger
+        setTimeout(() => {
+          chatBody.dataset.isLoading = "false";
+        }, 500);
+      }
+    }, 300);
+
+    chatBody.addEventListener('scroll', handleScroll);
+    return () => chatBody.removeEventListener('scroll', handleScroll);
+  };
+
+  // Initialisation de la conversation
+  const initConversation = async (user) => {
+    // Réinitialiser les variables globales
+    allMessages = [];
+    currentOffset = 0;
+
+    // Charger tous les messages
+    await loadMessages(user);
+
+    // Configurer le défilement infini
+    setupInfiniteScroll(user);
+  };
+
   // Charger les messages à l'ouverture
-  await loadMessages();
+  await initConversation(user);
 
   // 📌 Fonction d'envoi de message
   const sendMessage = async () => {
@@ -137,15 +278,15 @@ export const messageModal = async (user) => {
     // Création de la date pour le message envoyé
     const now = new Date();
     const formattedTime = now
-      .toLocaleString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-      .replace(",", "");
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
 
     // Ajout immédiat du message côté client
     const messageElement = document.createElement("p");
@@ -168,13 +309,16 @@ export const messageModal = async (user) => {
       console.log("📡 Réponse POST reçue :", response.status);
       if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
+      // Après un envoi réussi, réinitialiser la conversation pour afficher le nouveau message
+      allMessages = []; // Vider le cache pour forcer un rechargement
       await refreshConversations();
+
       const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
       socket.send(messageTrailing);
       isTypingSent = false;
 
       console.log(
-        "✅ Message envoyé avec succès et conversations rafraîchies !"
+          "✅ Message envoyé avec succès et conversations rafraîchies !"
       );
     } catch (error) {
       console.error("❌ Erreur d'envoi du message :", error);
@@ -200,26 +344,24 @@ export const messageModal = async (user) => {
     }
   }
 
-// Envoie du message "typing_end" après une pause d'inactivité
+  // Envoie du message "typing_end" après une pause d'inactivité
   const sendMessageTrailing = debounce(() => {
     const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
     socket.send(messageTrailing);
     isTypingSent = false;
   }, 1000);
 
-// Gestion de l'input avec "change"
+  // Gestion de l'input avec "change"
   inputField.addEventListener("input", () => {
     sendMessageLeading();  // Envoi immédiat
-    sendMessageTrailing(); // Envoi après 2s d'inactivité
+    sendMessageTrailing(); // Envoi après 1s d'inactivité
   });
 
+  sendButton.addEventListener("click", sendMessage);
 
-  sendButton.addEventListener("click", sendMessage
-
-  );
   inputField.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
-      sendMessage()
+      sendMessage();
       const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
       socket.send(messageTrailing);
       isTypingSent = false;
@@ -228,8 +370,7 @@ export const messageModal = async (user) => {
 };
 
 /**
- * CSS injecté (identique à ta version précédente)
- * Assure-toi qu'il n'est pas déjà déclaré ailleurs, pour éviter les doublons.
+ * CSS injecté
  */
 const style = document.createElement("style");
 style.innerHTML = `
@@ -274,6 +415,16 @@ style.innerHTML = `
     border-bottom: 1px solid #3A3A3A;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
+  }
+  
+  .chat-end-marker {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin: 10px 0;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: rgba(100, 100, 100, 0.1);
   }
 
   .chat-close {
@@ -379,6 +530,3 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 console.log("✅ Styles appliqués.");
-
-
-
