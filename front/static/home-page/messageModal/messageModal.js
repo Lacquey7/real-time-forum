@@ -1,5 +1,5 @@
 import { refreshConversations } from "../home-components/body.js";
-import {socket} from "../../router.js";
+import { socket } from "../../router.js";
 
 export const messageModal = async (user) => {
   console.log("✅ messageModal appelée avec :", user);
@@ -8,7 +8,7 @@ export const messageModal = async (user) => {
   const existingModal = document.querySelector(".chat-modal");
   if (existingModal) {
     console.log(
-      "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
+        "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
     );
     existingModal.remove();
   }
@@ -60,18 +60,18 @@ export const messageModal = async (user) => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     return date
-      .toLocaleString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-      .replace(",", "");
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
   };
 
-  // 📌 Fonction pour charger les messages via GET
+  // 📌 Fonction pour charger les messages via GET avec pagination côté client (10 par 10)
   const loadMessages = async () => {
     const url = `http://localhost:8080/message?user=${user}`;
     console.log("📡 Requête GET envoyée à :", url);
@@ -98,21 +98,77 @@ export const messageModal = async (user) => {
         return;
       }
 
-      // Affichage des messages reçus
-      messages.forEach(({ sender, message, date }) => {
+      // Stocker tous les messages pour gérer la pagination côté client
+      const allMessages = messages;
+      let displayedCount = 10; // On affiche d'abord les 10 derniers messages
+
+      // Affichage initial (les 10 derniers messages)
+      const initialMessages = allMessages.slice(-displayedCount);
+      initialMessages.forEach(({ sender, message, date }) => {
         const messageElement = document.createElement("p");
         messageElement.classList.add(
-          "chat-message",
-          sender === user ? "received" : "sent"
+            "chat-message",
+            sender === user ? "received" : "sent"
         );
         messageElement.innerHTML = `${message} <br><small>${formatDate(
-          date
+            date
         )}</small>`;
         chatBody.appendChild(messageElement);
       });
 
       // Scroll automatique vers le dernier message
       chatBody.scrollTop = chatBody.scrollHeight;
+
+      // Fonction throttle pour limiter la fréquence d'exécution
+      function throttle(func, delay) {
+        let lastCall = 0;
+        return function (...args) {
+          const now = Date.now();
+          if (now - lastCall >= delay) {
+            lastCall = now;
+            return func(...args);
+          }
+        };
+      }
+
+      // Événement de scroll : au slide vers le haut, charger 10 messages supplémentaires avec un délai
+      chatBody.addEventListener(
+          "scroll",
+          throttle(() => {
+            // Si le scroll atteint le haut (ou presque) et qu'il reste des messages à afficher
+            if (chatBody.scrollTop < 50 && displayedCount < allMessages.length) {
+              console.log("📡 Chargement de 10 messages plus anciens...");
+              const oldScrollHeight = chatBody.scrollHeight;
+              // Petit délai avant affichage (pour effet de slide)
+              setTimeout(() => {
+                const newCount = Math.min(
+                    displayedCount + 10,
+                    allMessages.length
+                );
+                // Sélectionner les messages à ajouter (ceux plus anciens)
+                const newMessages = allMessages.slice(
+                    allMessages.length - newCount,
+                    allMessages.length - displayedCount
+                );
+                newMessages.forEach(({ sender, message, date }) => {
+                  const messageElement = document.createElement("p");
+                  messageElement.classList.add(
+                      "chat-message",
+                      sender === user ? "received" : "sent"
+                  );
+                  messageElement.innerHTML = `${message} <br><small>${formatDate(
+                      date
+                  )}</small>`;
+                  // Préfixer les nouveaux messages (au-dessus des messages existants)
+                  chatBody.insertBefore(messageElement, chatBody.firstChild);
+                });
+                displayedCount = newCount;
+                // Ajuster la position du scroll pour conserver la vue
+                chatBody.scrollTop = chatBody.scrollHeight - oldScrollHeight;
+              }, 300); // délai de 300ms
+            }
+          }, 300)
+      );
     } catch (error) {
       chatBody.innerHTML = `<p class="chat-message received">
                 Erreur de chargement des messages.
@@ -137,15 +193,15 @@ export const messageModal = async (user) => {
     // Création de la date pour le message envoyé
     const now = new Date();
     const formattedTime = now
-      .toLocaleString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
-      .replace(",", "");
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
 
     // Ajout immédiat du message côté client
     const messageElement = document.createElement("p");
@@ -169,12 +225,15 @@ export const messageModal = async (user) => {
       if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
 
       await refreshConversations();
-      const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+      const messageTrailing = JSON.stringify({
+        type: "is_not_typing",
+        content: user,
+      });
       socket.send(messageTrailing);
       isTypingSent = false;
 
       console.log(
-        "✅ Message envoyé avec succès et conversations rafraîchies !"
+          "✅ Message envoyé avec succès et conversations rafraîchies !"
       );
     } catch (error) {
       console.error("❌ Erreur d'envoi du message :", error);
@@ -194,33 +253,39 @@ export const messageModal = async (user) => {
 
   function sendMessageLeading() {
     if (!isTypingSent) {
-      const messageLeading = JSON.stringify({ type: "is_typing", content: user });
+      const messageLeading = JSON.stringify({
+        type: "is_typing",
+        content: user,
+      });
       socket.send(messageLeading);
       isTypingSent = true;
     }
   }
 
-// Envoie du message "typing_end" après une pause d'inactivité
+  // Envoie du message "typing_end" après une pause d'inactivité
   const sendMessageTrailing = debounce(() => {
-    const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+    const messageTrailing = JSON.stringify({
+      type: "is_not_typing",
+      content: user,
+    });
     socket.send(messageTrailing);
     isTypingSent = false;
   }, 1000);
 
-// Gestion de l'input avec "change"
+  // Gestion de l'input avec "change"
   inputField.addEventListener("input", () => {
-    sendMessageLeading();  // Envoi immédiat
-    sendMessageTrailing(); // Envoi après 2s d'inactivité
+    sendMessageLeading(); // Envoi immédiat
+    sendMessageTrailing(); // Envoi après 1s d'inactivité
   });
 
-
-  sendButton.addEventListener("click", sendMessage
-
-  );
+  sendButton.addEventListener("click", sendMessage);
   inputField.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
-      sendMessage()
-      const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+      sendMessage();
+      const messageTrailing = JSON.stringify({
+        type: "is_not_typing",
+        content: user,
+      });
       socket.send(messageTrailing);
       isTypingSent = false;
     }
@@ -379,6 +444,3 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 console.log("✅ Styles appliqués.");
-
-
-
