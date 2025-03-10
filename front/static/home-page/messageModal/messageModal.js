@@ -1,5 +1,6 @@
 import { refreshConversations } from "../home-components/body.js";
 import { socket } from "../../router.js";
+import { socket } from "../../router.js";
 
 export const messageModal = async (user) => {
   console.log("✅ messageModal appelée avec :", user);
@@ -8,6 +9,7 @@ export const messageModal = async (user) => {
   const existingModal = document.querySelector(".chat-modal");
   if (existingModal) {
     console.log(
+        "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
         "⚠️ Une autre modal est déjà ouverte, on la supprime avant d'en ouvrir une nouvelle."
     );
     existingModal.remove();
@@ -60,6 +62,15 @@ export const messageModal = async (user) => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     return date
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
         .toLocaleString("fr-FR", {
           year: "numeric",
           month: "2-digit",
@@ -287,6 +298,15 @@ export const messageModal = async (user) => {
           second: "2-digit",
         })
         .replace(",", "");
+        .toLocaleString("fr-FR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+        .replace(",", "");
 
     // Ajout immédiat du message côté client
     const messageElement = document.createElement("p");
@@ -319,6 +339,7 @@ export const messageModal = async (user) => {
 
       console.log(
           "✅ Message envoyé avec succès et conversations rafraîchies !"
+          "✅ Message envoyé avec succès et conversations rafraîchies !"
       );
     } catch (error) {
       console.error("❌ Erreur d'envoi du message :", error);
@@ -338,19 +359,27 @@ export const messageModal = async (user) => {
 
   function sendMessageLeading() {
     if (!isTypingSent) {
-      const messageLeading = JSON.stringify({ type: "is_typing", content: user });
+      const messageLeading = JSON.stringify({
+        type: "is_typing",
+        content: user,
+      });
       socket.send(messageLeading);
       isTypingSent = true;
     }
   }
 
   // Envoie du message "typing_end" après une pause d'inactivité
+  // Envoie du message "typing_end" après une pause d'inactivité
   const sendMessageTrailing = debounce(() => {
-    const messageTrailing = JSON.stringify({ type: "is_not_typing", content: user });
+    const messageTrailing = JSON.stringify({
+      type: "is_not_typing",
+      content: user,
+    });
     socket.send(messageTrailing);
     isTypingSent = false;
   }, 1000);
 
+  // Gestion de l'input avec "change"
   // Gestion de l'input avec "change"
   inputField.addEventListener("input", () => {
     sendMessageLeading();  // Envoi immédiat
